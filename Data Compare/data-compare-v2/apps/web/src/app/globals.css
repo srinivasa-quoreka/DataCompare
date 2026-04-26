@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 245 247 250;
+    --surface: 255 255 255;
+    --border: 225 228 232;
+    --accent: 9 105 218;
+    --accent-green: 26 127 55;
+    --accent-red: 207 34 46;
+  }
+}

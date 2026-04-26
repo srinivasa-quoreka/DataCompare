@@ -1,0 +1,173 @@
+// Prisma schema for Data Compare v2.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  superadmin
+  admin
+  user
+}
+
+enum RunStatus {
+  pending
+  running
+  passed
+  failed
+  error
+}
+
+enum JobStatus {
+  pending
+  running
+  completed
+  failed
+}
+
+enum ReconMode {
+  row_compare
+  group_sum
+}
+
+model User {
+  id             String   @id @default(cuid())
+  username       String   @unique
+  email          String?  @unique
+  passwordHash   String
+  role           UserRole @default(user)
+  isActive       Boolean  @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  stories        Story[]
+  storyRuns      StoryRun[]
+  reconJobs      ReconciliationJob[]
+  xmlDiffJobs    XmlDiffJob[]
+  uploads        FileUpload[]
+  auditLogs      AuditLog[]
+
+  @@index([role])
+}
+
+model Story {
+  id              String   @id @default(cuid())
+  key             String   @unique // short kebab-case shown in UI chip
+  title           String
+  description     String?
+  apiEndpoint     String
+  apiMethod       String   @default("GET")
+  apiHeaders      Json     @default("{}")
+  apiBody         Json?
+  mappingFileId   String?
+  expectedFileId  String?
+  ownerId         String
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  mappingFile     FileUpload? @relation("StoryMapping", fields: [mappingFileId], references: [id])
+  expectedFile    FileUpload? @relation("StoryExpected", fields: [expectedFileId], references: [id])
+  runs            StoryRun[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model StoryRun {
+  id             String     @id @default(cuid())
+  storyId        String
+  story          Story      @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  triggeredById  String
+  triggeredBy    User       @relation(fields: [triggeredById], references: [id])
+  status         RunStatus  @default(pending)
+  startedAt      DateTime   @default(now())
+  finishedAt     DateTime?
+  apiResponse    Json?
+  results        Json       @default("[]") // ValidationResult[]
+  passedCount    Int        @default(0)
+  failedCount    Int        @default(0)
+  totalCount     Int        @default(0)
+  errorMessage   String?    @db.Text
+
+  @@index([storyId, startedAt(sort: Desc)])
+  @@index([status])
+}
+
+model ReconciliationJob {
+  id            String     @id @default(cuid())
+  name          String
+  mode          ReconMode  @default(row_compare)
+  beforeFileId  String
+  afterFileId   String
+  beforeFile    FileUpload @relation("ReconBefore", fields: [beforeFileId], references: [id])
+  afterFile     FileUpload @relation("ReconAfter", fields: [afterFileId], references: [id])
+  config        Json       // ReconciliationConfig
+  status        JobStatus  @default(pending)
+  results       Json?      // diff payload
+  errorMessage  String?    @db.Text
+  ownerId       String
+  owner         User       @relation(fields: [ownerId], references: [id])
+  createdAt     DateTime   @default(now())
+  finishedAt    DateTime?
+
+  @@index([ownerId, createdAt(sort: Desc)])
+}
+
+model XmlDiffJob {
+  id            String     @id @default(cuid())
+  name          String
+  beforeFileId  String
+  afterFileId   String
+  beforeFile    FileUpload @relation("XmlBefore", fields: [beforeFileId], references: [id])
+  afterFile     FileUpload @relation("XmlAfter", fields: [afterFileId], references: [id])
+  status        JobStatus  @default(pending)
+  diffSummary   String?    @db.Text
+  diffPayload   Json?
+  ownerId       String
+  owner         User       @relation(fields: [ownerId], references: [id])
+  createdAt     DateTime   @default(now())
+
+  @@index([ownerId, createdAt(sort: Desc)])
+}
+
+model FileUpload {
+  id           String   @id @default(cuid())
+  filename     String   // original name
+  storedPath   String   // path on disk under UPLOAD_DIR
+  mimeType     String
+  sizeBytes    Int
+  sha256       String
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  storyMappings  Story[] @relation("StoryMapping")
+  storyExpected  Story[] @relation("StoryExpected")
+  reconBefore    ReconciliationJob[] @relation("ReconBefore")
+  reconAfter     ReconciliationJob[] @relation("ReconAfter")
+  xmlBefore      XmlDiffJob[] @relation("XmlBefore")
+  xmlAfter       XmlDiffJob[] @relation("XmlAfter")
+
+  @@index([uploadedById])
+  @@index([sha256])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String   // e.g. "story.run", "user.create", "auth.login"
+  target    String?  // e.g. "Story:abc123"
+  meta      Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+}

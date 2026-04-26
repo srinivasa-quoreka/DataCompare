@@ -1,0 +1,3105 @@
+From 3b0e10cebb84235eb113f0dd77733b92feadcb94 Mon Sep 17 00:00:00 2001
+From: Claude <claude@datacompare>
+Date: Sat, 25 Apr 2026 12:59:06 +0000
+Subject: [PATCH] feat(v2): production-grade scaffold (Next.js + NestJS +
+ Postgres, no LLM)
+
+---
+ data-compare-v2/.env.example                  |  32 ++++
+ data-compare-v2/.gitignore                    |  14 ++
+ data-compare-v2/README.md                     | 145 ++++++++++++++
+ data-compare-v2/apps/api/Dockerfile           |  34 ++++
+ data-compare-v2/apps/api/nest-cli.json        |   5 +
+ data-compare-v2/apps/api/package.json         |  56 ++++++
+ .../prisma/migrations/0001_init/migration.sql |   4 +
+ data-compare-v2/apps/api/prisma/schema.prisma | 173 +++++++++++++++++
+ data-compare-v2/apps/api/prisma/seed.ts       |  31 +++
+ data-compare-v2/apps/api/src/app.module.ts    |  26 +++
+ .../apps/api/src/auth/auth.controller.ts      |  40 ++++
+ .../apps/api/src/auth/auth.module.ts          |  25 +++
+ .../apps/api/src/auth/auth.service.ts         |  44 +++++
+ .../api/src/auth/current-user.decorator.ts    |   5 +
+ .../apps/api/src/auth/jwt-auth.guard.ts       |   5 +
+ .../apps/api/src/auth/jwt.strategy.ts         |  24 +++
+ .../apps/api/src/auth/roles.guard.ts          |  24 +++
+ data-compare-v2/apps/api/src/main.ts          |  34 ++++
+ .../apps/api/src/prisma/prisma.module.ts      |   9 +
+ .../apps/api/src/prisma/prisma.service.ts     |  12 ++
+ .../reconciliation.controller.ts              |  40 ++++
+ .../reconciliation/reconciliation.module.ts   |   9 +
+ .../reconciliation/reconciliation.service.ts  | 178 ++++++++++++++++++
+ .../api/src/stories/stories.controller.ts     |  43 +++++
+ .../apps/api/src/stories/stories.module.ts    |   9 +
+ .../apps/api/src/stories/stories.service.ts   | 106 +++++++++++
+ .../apps/api/src/users/users.controller.ts    |  46 +++++
+ .../apps/api/src/users/users.module.ts        |  10 +
+ .../apps/api/src/users/users.service.ts       |  40 ++++
+ .../api/src/xml-diff/xml-diff.controller.ts   |  37 ++++
+ .../apps/api/src/xml-diff/xml-diff.module.ts  |   9 +
+ .../apps/api/src/xml-diff/xml-diff.service.ts |  91 +++++++++
+ data-compare-v2/apps/api/tsconfig.json        |  14 ++
+ data-compare-v2/apps/web/Dockerfile           |  25 +++
+ data-compare-v2/apps/web/next-env.d.ts        |   2 +
+ data-compare-v2/apps/web/next.config.js       |   7 +
+ data-compare-v2/apps/web/package.json         |  36 ++++
+ data-compare-v2/apps/web/postcss.config.js    |   1 +
+ .../apps/web/src/app/(app)/admin/page.tsx     |  47 +++++
+ .../apps/web/src/app/(app)/layout.tsx         |   5 +
+ .../web/src/app/(app)/metal-apis/page.tsx     |  60 ++++++
+ .../web/src/app/(app)/reconciliation/page.tsx |  44 +++++
+ .../apps/web/src/app/(app)/xml-diff/page.tsx  |  23 +++
+ data-compare-v2/apps/web/src/app/globals.css  |  14 ++
+ data-compare-v2/apps/web/src/app/layout.tsx   |  18 ++
+ .../apps/web/src/app/login/page.tsx           |  49 +++++
+ data-compare-v2/apps/web/src/app/page.tsx     |   5 +
+ .../apps/web/src/app/providers.tsx            |  13 ++
+ .../apps/web/src/components/app-shell.tsx     |  56 ++++++
+ .../apps/web/src/components/auth-provider.tsx |  54 ++++++
+ .../apps/web/src/lib/api-client.ts            |  31 +++
+ data-compare-v2/apps/web/tailwind.config.ts   |  19 ++
+ data-compare-v2/apps/web/tsconfig.json        |  21 +++
+ .../infra/docker/docker-compose.yml           |  68 +++++++
+ data-compare-v2/infra/nginx/default.conf      |  26 +++
+ .../infra/scripts/First-Time-Setup.bat        |   8 +
+ .../infra/scripts/Start-DataCompare.bat       |  24 +++
+ .../infra/scripts/Stop-DataCompare.bat        |   5 +
+ data-compare-v2/package.json                  |  31 +++
+ data-compare-v2/packages/shared/package.json  |  22 +++
+ data-compare-v2/packages/shared/src/index.ts  |   9 +
+ .../packages/shared/src/mapping.ts            |  74 ++++++++
+ .../packages/shared/src/normalize.ts          | 135 +++++++++++++
+ data-compare-v2/packages/shared/src/paths.ts  | 102 ++++++++++
+ data-compare-v2/packages/shared/src/types.ts  | 104 ++++++++++
+ data-compare-v2/packages/shared/tsconfig.json |  10 +
+ data-compare-v2/pnpm-workspace.yaml           |   3 +
+ data-compare-v2/tsconfig.base.json            |  24 +++
+ 68 files changed, 2549 insertions(+)
+ create mode 100755 data-compare-v2/.env.example
+ create mode 100755 data-compare-v2/.gitignore
+ create mode 100755 data-compare-v2/README.md
+ create mode 100755 data-compare-v2/apps/api/Dockerfile
+ create mode 100755 data-compare-v2/apps/api/nest-cli.json
+ create mode 100755 data-compare-v2/apps/api/package.json
+ create mode 100755 data-compare-v2/apps/api/prisma/migrations/0001_init/migration.sql
+ create mode 100755 data-compare-v2/apps/api/prisma/schema.prisma
+ create mode 100755 data-compare-v2/apps/api/prisma/seed.ts
+ create mode 100755 data-compare-v2/apps/api/src/app.module.ts
+ create mode 100755 data-compare-v2/apps/api/src/auth/auth.controller.ts
+ create mode 100755 data-compare-v2/apps/api/src/auth/auth.module.ts
+ create mode 100755 data-compare-v2/apps/api/src/auth/auth.service.ts
+ create mode 100755 data-compare-v2/apps/api/src/auth/current-user.decorator.ts
+ create mode 100755 data-compare-v2/apps/api/src/auth/jwt-auth.guard.ts
+ create mode 100755 data-compare-v2/apps/api/src/auth/jwt.strategy.ts
+ create mode 100755 data-compare-v2/apps/api/src/auth/roles.guard.ts
+ create mode 100755 data-compare-v2/apps/api/src/main.ts
+ create mode 100755 data-compare-v2/apps/api/src/prisma/prisma.module.ts
+ create mode 100755 data-compare-v2/apps/api/src/prisma/prisma.service.ts
+ create mode 100755 data-compare-v2/apps/api/src/reconciliation/reconciliation.controller.ts
+ create mode 100755 data-compare-v2/apps/api/src/reconciliation/reconciliation.module.ts
+ create mode 100755 data-compare-v2/apps/api/src/reconciliation/reconciliation.service.ts
+ create mode 100755 data-compare-v2/apps/api/src/stories/stories.controller.ts
+ create mode 100755 data-compare-v2/apps/api/src/stories/stories.module.ts
+ create mode 100755 data-compare-v2/apps/api/src/stories/stories.service.ts
+ create mode 100755 data-compare-v2/apps/api/src/users/users.controller.ts
+ create mode 100755 data-compare-v2/apps/api/src/users/users.module.ts
+ create mode 100755 data-compare-v2/apps/api/src/users/users.service.ts
+ create mode 100755 data-compare-v2/apps/api/src/xml-diff/xml-diff.controller.ts
+ create mode 100755 data-compare-v2/apps/api/src/xml-diff/xml-diff.module.ts
+ create mode 100755 data-compare-v2/apps/api/src/xml-diff/xml-diff.service.ts
+ create mode 100755 data-compare-v2/apps/api/tsconfig.json
+ create mode 100755 data-compare-v2/apps/web/Dockerfile
+ create mode 100755 data-compare-v2/apps/web/next-env.d.ts
+ create mode 100755 data-compare-v2/apps/web/next.config.js
+ create mode 100755 data-compare-v2/apps/web/package.json
+ create mode 100755 data-compare-v2/apps/web/postcss.config.js
+ create mode 100755 data-compare-v2/apps/web/src/app/(app)/admin/page.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/(app)/layout.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/(app)/metal-apis/page.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/(app)/reconciliation/page.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/(app)/xml-diff/page.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/globals.css
+ create mode 100755 data-compare-v2/apps/web/src/app/layout.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/login/page.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/page.tsx
+ create mode 100755 data-compare-v2/apps/web/src/app/providers.tsx
+ create mode 100755 data-compare-v2/apps/web/src/components/app-shell.tsx
+ create mode 100755 data-compare-v2/apps/web/src/components/auth-provider.tsx
+ create mode 100755 data-compare-v2/apps/web/src/lib/api-client.ts
+ create mode 100755 data-compare-v2/apps/web/tailwind.config.ts
+ create mode 100755 data-compare-v2/apps/web/tsconfig.json
+ create mode 100755 data-compare-v2/infra/docker/docker-compose.yml
+ create mode 100755 data-compare-v2/infra/nginx/default.conf
+ create mode 100755 data-compare-v2/infra/scripts/First-Time-Setup.bat
+ create mode 100755 data-compare-v2/infra/scripts/Start-DataCompare.bat
+ create mode 100755 data-compare-v2/infra/scripts/Stop-DataCompare.bat
+ create mode 100755 data-compare-v2/package.json
+ create mode 100755 data-compare-v2/packages/shared/package.json
+ create mode 100755 data-compare-v2/packages/shared/src/index.ts
+ create mode 100755 data-compare-v2/packages/shared/src/mapping.ts
+ create mode 100755 data-compare-v2/packages/shared/src/normalize.ts
+ create mode 100755 data-compare-v2/packages/shared/src/paths.ts
+ create mode 100755 data-compare-v2/packages/shared/src/types.ts
+ create mode 100755 data-compare-v2/packages/shared/tsconfig.json
+ create mode 100755 data-compare-v2/pnpm-workspace.yaml
+ create mode 100755 data-compare-v2/tsconfig.base.json
+
+diff --git a/data-compare-v2/.env.example b/data-compare-v2/.env.example
+new file mode 100755
+index 0000000..2a86f30
+--- /dev/null
++++ b/data-compare-v2/.env.example
+@@ -0,0 +1,32 @@
++# =============================================================================
++# Data Compare v2 — environment variables
++# Copy to .env at the repo root before running docker compose
++# =============================================================================
++
++# --- Postgres ---
++POSTGRES_USER=datacompare
++POSTGRES_PASSWORD=changeme_in_prod
++POSTGRES_DB=datacompare
++POSTGRES_PORT=5432
++
++# Connection string used by the API (inside Docker network = host "postgres")
++DATABASE_URL=postgresql://datacompare:changeme_in_prod@postgres:5432/datacompare?schema=public
++
++# --- API ---
++API_PORT=3001
++JWT_SECRET=replace_with_64_byte_random_secret
++JWT_EXPIRES_IN=8h
++BCRYPT_ROUNDS=12
++CORS_ORIGIN=http://localhost:3000,http://172.16.0.140:3000
++
++# Where uploaded Excel/XML files land (mounted volume in Docker)
++UPLOAD_DIR=/var/data-compare/uploads
++MAX_UPLOAD_MB=50
++
++# --- Web ---
++WEB_PORT=3000
++NEXT_PUBLIC_API_URL=http://localhost:3001
++
++# --- Logging / Observability ---
++LOG_LEVEL=info
++NODE_ENV=production
+diff --git a/data-compare-v2/.gitignore b/data-compare-v2/.gitignore
+new file mode 100755
+index 0000000..8c6bbad
+--- /dev/null
++++ b/data-compare-v2/.gitignore
+@@ -0,0 +1,14 @@
++node_modules/
++dist/
++.next/
++.turbo/
++coverage/
++*.log
++.env
++.env.local
++.env.*.local
++.DS_Store
++.vscode/
++.idea/
++uploads/
++*.tsbuildinfo
+diff --git a/data-compare-v2/README.md b/data-compare-v2/README.md
+new file mode 100755
+index 0000000..d11550d
+--- /dev/null
++++ b/data-compare-v2/README.md
+@@ -0,0 +1,145 @@
++# Data Compare v2
++
++Production rewrite of the legacy `FT_Validator_Standalone.html` (~6,950 lines, single file) into a maintainable, multi-user platform. No LLM dependency, no API keys to buy.
++
++## What changed vs. v1
++
++| Concern | v1 (legacy) | v2 (this repo) |
++|---|---|---|
++| Frontend | Single HTML file, vanilla JS | Next.js 14 + React 18 + TypeScript + Tailwind |
++| State / data | `localStorage` per browser | PostgreSQL (Prisma ORM), shared across users |
++| Backend | Static `server.js` | NestJS REST API with JWT auth, RBAC, rate limiting |
++| Auth | Hard-coded credentials in JS | bcrypt-hashed passwords in DB, JWT, change-password flow |
++| Deploy | Double-click `.bat` | `docker compose up` on the same Windows server (port 5000 preserved) |
++| Code reuse | None | `@data-compare/shared` package — `cvApi`, `cvApp`, `resolveFullPath`, `parseMappingRows` shared by web + api |
++
++The three modules from v1 are preserved 1:1 in the UI: **Metal APIs**, **Reconciliation**, **XML Diff**.
++
++## Repo layout
++
++```
++data-compare-v2/
++  apps/
++    web/         Next.js frontend (port 3000)
++    api/         NestJS backend (port 3001)
++  packages/
++    shared/      Pure-TS algorithms (cvApi, cvApp, paths, mapping) used by both apps
++  infra/
++    docker/      docker-compose.yml (web + api + postgres + nginx)
++    nginx/       Reverse proxy config — exposes everything on legacy port 5000
++    scripts/     Windows .bat launchers
++  .env.example   Copy to .env and fill in
++```
++
++## Architecture
++
++```
++                +----------------+
++ Browser  --->  | nginx :5000    |  reverse proxy (preserves legacy URL)
++                +-------+--------+
++                        |
++              +---------+---------+
++              |                   |
++       +------v------+      +-----v------+
++       | web :3000   |      | api :3001  |
++       | Next.js     |----> | NestJS     |
++       +-------------+      +-----+------+
++                                  |
++                          +-------v-------+
++                          | postgres :16  |
++                          +---------------+
++```
++
++## Quick start (dev)
++
++Prerequisites: Node 20+, pnpm 9+, Docker Desktop.
++
++```bash
++cp .env.example .env
++# edit .env — at minimum set JWT_SECRET and POSTGRES_PASSWORD
++
++pnpm install
++docker compose -f infra/docker/docker-compose.yml --env-file .env up -d postgres
++pnpm db:generate
++pnpm db:migrate
++pnpm --filter @data-compare/api prisma:seed   # seeds the legacy default users
++pnpm dev                                       # web on :3000, api on :3001
++```
++
++Open http://localhost:3000 and log in with `admin` / `Admin123!` (rotate immediately).
++
++## Deploy to the existing Windows server
++
++The legacy app runs at `http://172.16.0.140:5000`. v2 keeps that exact URL via the nginx container.
++
++```cmd
++git clone https://github.com/srinivasa-quoreka/DataCompare.git data-compare-v2
++cd data-compare-v2
++copy .env.example .env
++notepad .env                          REM fill in JWT_SECRET, POSTGRES_PASSWORD
++
++infra\scripts\Start-DataCompare.bat   REM brings up postgres, api, web, nginx
++infra\scripts\First-Time-Setup.bat    REM one-time: migrate DB + seed users
++```
++
++After it's up: `http://172.16.0.140:5000` → same URL the team already uses.
++
++## Adding a new validation type
++
++This is the workflow that pays back the upfront setup cost — adding a fourth module is a small, isolated change rather than a thousand-line edit to a single HTML file.
++
++1. **Backend** — create `apps/api/src/<your-module>/` with `*.module.ts`, `*.service.ts`, `*.controller.ts`. Register the module in `app.module.ts`.
++2. **Database** — add the new entity to `apps/api/prisma/schema.prisma`. Run `pnpm db:migrate` to generate and apply the migration.
++3. **Shared algorithms** — if you have new normalization or comparison logic, put it in `packages/shared/src/` so both apps import the same code.
++4. **Frontend** — create `apps/web/src/app/(app)/<your-module>/page.tsx`. Add it to the `NAV` array in `app-shell.tsx`.
++
++The shared types in `packages/shared/src/types.ts` are the contract. Add the new type there and both ends pick it up at compile time.
++
++## Migration path from the single-file HTML
++
++The legacy app stores everything in `localStorage`. To migrate:
++
++1. Have each user log in to the legacy app and export their `localStorage.dc.data` JSON via the browser console.
++2. POST it to `/api/admin/import-legacy` (TODO endpoint — to be implemented).
++3. The importer maps `data.stories` (a keyed object) into the `Story` table, preserves keys, re-hashes passwords, and links uploaded files into `FileUpload`.
++
++Until the importer is wired, users can re-create stories through the UI — the data model is a strict superset of v1.
++
++## Default credentials (seeded)
++
++| Username | Password | Role |
++|---|---|---|
++| `superadmin` | `SuperAdmin@123!` | superadmin |
++| `admin` | `Admin123!` | admin |
++| `user1`–`user4` | `User1Pass!`–`User4Pass!` | user |
++
++**Rotate immediately after first login.**
++
++## Security notes
++
++- All passwords stored as bcrypt hashes (cost 12).
++- JWT signing secret comes from `JWT_SECRET` — generate with `openssl rand -base64 64`.
++- CORS is restricted to `CORS_ORIGIN` (comma-separated allowlist).
++- Rate limiting via `@nestjs/throttler` (120 req/min per IP, tunable in `app.module.ts`).
++- File uploads land outside the web root; only the API serves them via authenticated routes.
++- `helmet` is on in production.
++
++## Verifying the build
++
++```bash
++pnpm install
++pnpm -r run build
++pnpm -r run lint
++```
++
++CI should run these plus `pnpm test` (unit tests for `@data-compare/shared` algorithms).
++
++## Roadmap (post-scaffold)
++
++- File-upload endpoints + multipart handling (currently the modules expect `FileUpload` rows to exist — wire `multer` into a `FilesController`).
++- Story-detail page UI (5-step wizard) — backend is ready, frontend page is a stub.
++- Reconciliation wizard UI (the legacy step bar + column-mapping grid).
++- XML Diff wizard UI.
++- Background job runner (BullMQ + Redis) so long-running reconciliations don't block the request thread.
++- Audit-log viewer in admin.
++- Legacy data importer endpoint.
+diff --git a/data-compare-v2/apps/api/Dockerfile b/data-compare-v2/apps/api/Dockerfile
+new file mode 100755
+index 0000000..2a59b4a
+--- /dev/null
++++ b/data-compare-v2/apps/api/Dockerfile
+@@ -0,0 +1,34 @@
++FROM node:20-alpine AS base
++RUN apk add --no-cache openssl
++WORKDIR /app
++RUN corepack enable && corepack prepare pnpm@9.7.0 --activate
++
++# --- deps ---
++FROM base AS deps
++COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
++COPY apps/api/package.json ./apps/api/
++COPY packages/shared/package.json ./packages/shared/
++RUN pnpm install --frozen-lockfile || pnpm install
++
++# --- build ---
++FROM deps AS build
++COPY tsconfig.base.json ./
++COPY packages ./packages
++COPY apps/api ./apps/api
++RUN pnpm --filter @data-compare/shared build || true
++RUN pnpm --filter @data-compare/api prisma:generate
++RUN pnpm --filter @data-compare/api build
++
++# --- run ---
++FROM node:20-alpine AS run
++RUN apk add --no-cache openssl tini
++WORKDIR /app
++ENV NODE_ENV=production
++COPY --from=build /app/node_modules ./node_modules
++COPY --from=build /app/apps/api/dist ./apps/api/dist
++COPY --from=build /app/apps/api/prisma ./apps/api/prisma
++COPY --from=build /app/apps/api/package.json ./apps/api/
++COPY --from=build /app/packages ./packages
++EXPOSE 3001
++ENTRYPOINT ["/sbin/tini","--"]
++CMD ["node","apps/api/dist/main.js"]
+diff --git a/data-compare-v2/apps/api/nest-cli.json b/data-compare-v2/apps/api/nest-cli.json
+new file mode 100755
+index 0000000..2566481
+--- /dev/null
++++ b/data-compare-v2/apps/api/nest-cli.json
+@@ -0,0 +1,5 @@
++{
++  "$schema": "https://json.schemastore.org/nest-cli",
++  "collection": "@nestjs/schematics",
++  "sourceRoot": "src"
++}
+diff --git a/data-compare-v2/apps/api/package.json b/data-compare-v2/apps/api/package.json
+new file mode 100755
+index 0000000..2a2bc18
+--- /dev/null
++++ b/data-compare-v2/apps/api/package.json
+@@ -0,0 +1,56 @@
++{
++  "name": "@data-compare/api",
++  "version": "0.1.0",
++  "private": true,
++  "scripts": {
++    "dev": "nest start --watch",
++    "build": "nest build",
++    "start": "node dist/main.js",
++    "lint": "eslint \"src/**/*.ts\"",
++    "test": "vitest run",
++    "prisma:generate": "prisma generate",
++    "prisma:migrate": "prisma migrate dev",
++    "prisma:seed": "ts-node prisma/seed.ts"
++  },
++  "prisma": {
++    "seed": "ts-node prisma/seed.ts"
++  },
++  "dependencies": {
++    "@nestjs/common": "^10.4.4",
++    "@nestjs/config": "^3.2.3",
++    "@nestjs/core": "^10.4.4",
++    "@nestjs/jwt": "^10.2.0",
++    "@nestjs/passport": "^10.0.3",
++    "@nestjs/platform-express": "^10.4.4",
++    "@nestjs/throttler": "^6.2.1",
++    "@prisma/client": "^5.20.0",
++    "bcrypt": "^5.1.1",
++    "class-transformer": "^0.5.1",
++    "class-validator": "^0.14.1",
++    "fast-xml-parser": "^4.5.0",
++    "helmet": "^8.0.0",
++    "multer": "^1.4.5-lts.1",
++    "passport": "^0.7.0",
++    "passport-jwt": "^4.0.1",
++    "passport-local": "^1.0.0",
++    "pino-http": "^10.3.0",
++    "reflect-metadata": "^0.2.2",
++    "rxjs": "^7.8.1",
++    "xlsx": "^0.18.5",
++    "@data-compare/shared": "workspace:*"
++  },
++  "devDependencies": {
++    "@nestjs/cli": "^10.4.5",
++    "@nestjs/testing": "^10.4.4",
++    "@types/bcrypt": "^5.0.2",
++    "@types/express": "^5.0.0",
++    "@types/multer": "^1.4.12",
++    "@types/node": "^22.7.4",
++    "@types/passport-jwt": "^4.0.1",
++    "@types/passport-local": "^1.0.38",
++    "prisma": "^5.20.0",
++    "ts-node": "^10.9.2",
++    "typescript": "^5.5.4",
++    "vitest": "^2.0.5"
++  }
++}
+diff --git a/data-compare-v2/apps/api/prisma/migrations/0001_init/migration.sql b/data-compare-v2/apps/api/prisma/migrations/0001_init/migration.sql
+new file mode 100755
+index 0000000..de561d0
+--- /dev/null
++++ b/data-compare-v2/apps/api/prisma/migrations/0001_init/migration.sql
+@@ -0,0 +1,4 @@
++-- The full schema is generated by `prisma migrate dev`. After cloning the
++-- repo and configuring .env, run:
++--   pnpm db:migrate
++-- which will replace this file with Prisma-generated SQL.
+diff --git a/data-compare-v2/apps/api/prisma/schema.prisma b/data-compare-v2/apps/api/prisma/schema.prisma
+new file mode 100755
+index 0000000..0628868
+--- /dev/null
++++ b/data-compare-v2/apps/api/prisma/schema.prisma
+@@ -0,0 +1,173 @@
++// Prisma schema for Data Compare v2.
++
++generator client {
++  provider = "prisma-client-js"
++}
++
++datasource db {
++  provider = "postgresql"
++  url      = env("DATABASE_URL")
++}
++
++enum UserRole {
++  superadmin
++  admin
++  user
++}
++
++enum RunStatus {
++  pending
++  running
++  passed
++  failed
++  error
++}
++
++enum JobStatus {
++  pending
++  running
++  completed
++  failed
++}
++
++enum ReconMode {
++  row_compare
++  group_sum
++}
++
++model User {
++  id             String   @id @default(cuid())
++  username       String   @unique
++  email          String?  @unique
++  passwordHash   String
++  role           UserRole @default(user)
++  isActive       Boolean  @default(true)
++  lastLoginAt    DateTime?
++  createdAt      DateTime @default(now())
++  updatedAt      DateTime @updatedAt
++
++  stories        Story[]
++  storyRuns      StoryRun[]
++  reconJobs      ReconciliationJob[]
++  xmlDiffJobs    XmlDiffJob[]
++  uploads        FileUpload[]
++  auditLogs      AuditLog[]
++
++  @@index([role])
++}
++
++model Story {
++  id              String   @id @default(cuid())
++  key             String   @unique // short kebab-case shown in UI chip
++  title           String
++  description     String?
++  apiEndpoint     String
++  apiMethod       String   @default("GET")
++  apiHeaders      Json     @default("{}")
++  apiBody         Json?
++  mappingFileId   String?
++  expectedFileId  String?
++  ownerId         String
++  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
++  mappingFile     FileUpload? @relation("StoryMapping", fields: [mappingFileId], references: [id])
++  expectedFile    FileUpload? @relation("StoryExpected", fields: [expectedFileId], references: [id])
++  runs            StoryRun[]
++  createdAt       DateTime @default(now())
++  updatedAt       DateTime @updatedAt
++
++  @@index([ownerId])
++}
++
++model StoryRun {
++  id             String     @id @default(cuid())
++  storyId        String
++  story          Story      @relation(fields: [storyId], references: [id], onDelete: Cascade)
++  triggeredById  String
++  triggeredBy    User       @relation(fields: [triggeredById], references: [id])
++  status         RunStatus  @default(pending)
++  startedAt      DateTime   @default(now())
++  finishedAt     DateTime?
++  apiResponse    Json?
++  results        Json       @default("[]") // ValidationResult[]
++  passedCount    Int        @default(0)
++  failedCount    Int        @default(0)
++  totalCount     Int        @default(0)
++  errorMessage   String?    @db.Text
++
++  @@index([storyId, startedAt(sort: Desc)])
++  @@index([status])
++}
++
++model ReconciliationJob {
++  id            String     @id @default(cuid())
++  name          String
++  mode          ReconMode  @default(row_compare)
++  beforeFileId  String
++  afterFileId   String
++  beforeFile    FileUpload @relation("ReconBefore", fields: [beforeFileId], references: [id])
++  afterFile     FileUpload @relation("ReconAfter", fields: [afterFileId], references: [id])
++  config        Json       // ReconciliationConfig
++  status        JobStatus  @default(pending)
++  results       Json?      // diff payload
++  errorMessage  String?    @db.Text
++  ownerId       String
++  owner         User       @relation(fields: [ownerId], references: [id])
++  createdAt     DateTime   @default(now())
++  finishedAt    DateTime?
++
++  @@index([ownerId, createdAt(sort: Desc)])
++}
++
++model XmlDiffJob {
++  id            String     @id @default(cuid())
++  name          String
++  beforeFileId  String
++  afterFileId   String
++  beforeFile    FileUpload @relation("XmlBefore", fields: [beforeFileId], references: [id])
++  afterFile     FileUpload @relation("XmlAfter", fields: [afterFileId], references: [id])
++  status        JobStatus  @default(pending)
++  diffSummary   String?    @db.Text
++  diffPayload   Json?
++  ownerId       String
++  owner         User       @relation(fields: [ownerId], references: [id])
++  createdAt     DateTime   @default(now())
++
++  @@index([ownerId, createdAt(sort: Desc)])
++}
++
++model FileUpload {
++  id           String   @id @default(cuid())
++  filename     String   // original name
++  storedPath   String   // path on disk under UPLOAD_DIR
++  mimeType     String
++  sizeBytes    Int
++  sha256       String
++  uploadedById String
++  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
++  createdAt    DateTime @default(now())
++
++  storyMappings  Story[] @relation("StoryMapping")
++  storyExpected  Story[] @relation("StoryExpected")
++  reconBefore    ReconciliationJob[] @relation("ReconBefore")
++  reconAfter     ReconciliationJob[] @relation("ReconAfter")
++  xmlBefore      XmlDiffJob[] @relation("XmlBefore")
++  xmlAfter       XmlDiffJob[] @relation("XmlAfter")
++
++  @@index([uploadedById])
++  @@index([sha256])
++}
++
++model AuditLog {
++  id        String   @id @default(cuid())
++  actorId   String?
++  actor     User?    @relation(fields: [actorId], references: [id])
++  action    String   // e.g. "story.run", "user.create", "auth.login"
++  target    String?  // e.g. "Story:abc123"
++  meta      Json?
++  ip        String?
++  userAgent String?
++  createdAt DateTime @default(now())
++
++  @@index([actorId, createdAt(sort: Desc)])
++  @@index([action, createdAt(sort: Desc)])
++}
+diff --git a/data-compare-v2/apps/api/prisma/seed.ts b/data-compare-v2/apps/api/prisma/seed.ts
+new file mode 100755
+index 0000000..da4826c
+--- /dev/null
++++ b/data-compare-v2/apps/api/prisma/seed.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient, UserRole } from "@prisma/client";
++import * as bcrypt from "bcrypt";
++
++const prisma = new PrismaClient();
++
++async function upsertUser(username: string, password: string, role: UserRole) {
++  const passwordHash = await bcrypt.hash(password, 12);
++  return prisma.user.upsert({
++    where: { username },
++    update: { passwordHash, role },
++    create: { username, passwordHash, role },
++  });
++}
++
++async function main() {
++  // These mirror the legacy default credentials. Operators MUST rotate them
++  // after first login — see README "Initial setup".
++  await upsertUser("superadmin", "SuperAdmin@123!", "superadmin");
++  await upsertUser("admin", "Admin123!", "admin");
++  for (let i = 1; i <= 4; i++) {
++    await upsertUser(`user${i}`, `User${i}Pass!`, "user");
++  }
++  console.log("Seeded default users.");
++}
++
++main()
++  .catch((e) => {
++    console.error(e);
++    process.exit(1);
++  })
++  .finally(() => prisma.$disconnect());
+diff --git a/data-compare-v2/apps/api/src/app.module.ts b/data-compare-v2/apps/api/src/app.module.ts
+new file mode 100755
+index 0000000..fbd6f79
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/app.module.ts
+@@ -0,0 +1,26 @@
++import { Module } from "@nestjs/common";
++import { ConfigModule } from "@nestjs/config";
++import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
++import { APP_GUARD } from "@nestjs/core";
++
++import { PrismaModule } from "./prisma/prisma.module";
++import { AuthModule } from "./auth/auth.module";
++import { UsersModule } from "./users/users.module";
++import { StoriesModule } from "./stories/stories.module";
++import { ReconciliationModule } from "./reconciliation/reconciliation.module";
++import { XmlDiffModule } from "./xml-diff/xml-diff.module";
++
++@Module({
++  imports: [
++    ConfigModule.forRoot({ isGlobal: true }),
++    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
++    PrismaModule,
++    AuthModule,
++    UsersModule,
++    StoriesModule,
++    ReconciliationModule,
++    XmlDiffModule,
++  ],
++  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
++})
++export class AppModule {}
+diff --git a/data-compare-v2/apps/api/src/auth/auth.controller.ts b/data-compare-v2/apps/api/src/auth/auth.controller.ts
+new file mode 100755
+index 0000000..a429d4c
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/auth/auth.controller.ts
+@@ -0,0 +1,40 @@
++import { Body, Controller, Post, UseGuards, Req, HttpCode } from "@nestjs/common";
++import { IsString, MinLength } from "class-validator";
++import { AuthService } from "./auth.service";
++import { JwtAuthGuard } from "./jwt-auth.guard";
++import { CurrentUser } from "./current-user.decorator";
++
++class LoginDto {
++  @IsString() username!: string;
++  @IsString() @MinLength(1) password!: string;
++}
++
++class ChangePasswordDto {
++  @IsString() @MinLength(1) oldPassword!: string;
++  @IsString() @MinLength(8) newPassword!: string;
++}
++
++@Controller("auth")
++export class AuthController {
++  constructor(private readonly auth: AuthService) {}
++
++  @Post("login")
++  @HttpCode(200)
++  login(@Body() dto: LoginDto) {
++    return this.auth.login(dto.username, dto.password);
++  }
++
++  @UseGuards(JwtAuthGuard)
++  @Post("change-password")
++  @HttpCode(200)
++  changePassword(@CurrentUser() user: { id: string }, @Body() dto: ChangePasswordDto) {
++    return this.auth.changePassword(user.id, dto.oldPassword, dto.newPassword);
++  }
++
++  @UseGuards(JwtAuthGuard)
++  @Post("me")
++  @HttpCode(200)
++  me(@CurrentUser() user: unknown) {
++    return user;
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/auth/auth.module.ts b/data-compare-v2/apps/api/src/auth/auth.module.ts
+new file mode 100755
+index 0000000..7505c0c
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/auth/auth.module.ts
+@@ -0,0 +1,25 @@
++import { Module } from "@nestjs/common";
++import { JwtModule } from "@nestjs/jwt";
++import { PassportModule } from "@nestjs/passport";
++
++import { AuthService } from "./auth.service";
++import { AuthController } from "./auth.controller";
++import { JwtStrategy } from "./jwt.strategy";
++import { UsersModule } from "../users/users.module";
++
++@Module({
++  imports: [
++    UsersModule,
++    PassportModule,
++    JwtModule.registerAsync({
++      useFactory: () => ({
++        secret: process.env.JWT_SECRET,
++        signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? "8h" },
++      }),
++    }),
++  ],
++  providers: [AuthService, JwtStrategy],
++  controllers: [AuthController],
++  exports: [AuthService],
++})
++export class AuthModule {}
+diff --git a/data-compare-v2/apps/api/src/auth/auth.service.ts b/data-compare-v2/apps/api/src/auth/auth.service.ts
+new file mode 100755
+index 0000000..5cab0c6
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/auth/auth.service.ts
+@@ -0,0 +1,44 @@
++import { Injectable, UnauthorizedException } from "@nestjs/common";
++import { JwtService } from "@nestjs/jwt";
++import * as bcrypt from "bcrypt";
++import { PrismaService } from "../prisma/prisma.service";
++
++@Injectable()
++export class AuthService {
++  constructor(private readonly prisma: PrismaService, private readonly jwt: JwtService) {}
++
++  async validateUser(username: string, password: string) {
++    const user = await this.prisma.user.findUnique({ where: { username } });
++    if (!user || !user.isActive) throw new UnauthorizedException("Invalid credentials");
++    const ok = await bcrypt.compare(password, user.passwordHash);
++    if (!ok) throw new UnauthorizedException("Invalid credentials");
++    return user;
++  }
++
++  async login(username: string, password: string) {
++    const user = await this.validateUser(username, password);
++    await this.prisma.user.update({
++      where: { id: user.id },
++      data: { lastLoginAt: new Date() },
++    });
++    const payload = { sub: user.id, username: user.username, role: user.role };
++    return {
++      accessToken: await this.jwt.signAsync(payload),
++      user: {
++        id: user.id,
++        username: user.username,
++        email: user.email,
++        role: user.role,
++      },
++    };
++  }
++
++  async changePassword(userId: string, oldPassword: string, newPassword: string) {
++    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
++    const ok = await bcrypt.compare(oldPassword, user.passwordHash);
++    if (!ok) throw new UnauthorizedException("Old password incorrect");
++    const passwordHash = await bcrypt.hash(newPassword, Number(process.env.BCRYPT_ROUNDS ?? 12));
++    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
++    return { ok: true };
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/auth/current-user.decorator.ts b/data-compare-v2/apps/api/src/auth/current-user.decorator.ts
+new file mode 100755
+index 0000000..339c7c7
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/auth/current-user.decorator.ts
+@@ -0,0 +1,5 @@
++import { createParamDecorator, ExecutionContext } from "@nestjs/common";
++
++export const CurrentUser = createParamDecorator(
++  (_: unknown, ctx: ExecutionContext) => ctx.switchToHttp().getRequest().user,
++);
+diff --git a/data-compare-v2/apps/api/src/auth/jwt-auth.guard.ts b/data-compare-v2/apps/api/src/auth/jwt-auth.guard.ts
+new file mode 100755
+index 0000000..2e81dba
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/auth/jwt-auth.guard.ts
+@@ -0,0 +1,5 @@
++import { Injectable } from "@nestjs/common";
++import { AuthGuard } from "@nestjs/passport";
++
++@Injectable()
++export class JwtAuthGuard extends AuthGuard("jwt") {}
+diff --git a/data-compare-v2/apps/api/src/auth/jwt.strategy.ts b/data-compare-v2/apps/api/src/auth/jwt.strategy.ts
+new file mode 100755
+index 0000000..9607f6c
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/auth/jwt.strategy.ts
+@@ -0,0 +1,24 @@
++import { Injectable } from "@nestjs/common";
++import { PassportStrategy } from "@nestjs/passport";
++import { ExtractJwt, Strategy } from "passport-jwt";
++
++interface JwtPayload {
++  sub: string;
++  username: string;
++  role: string;
++}
++
++@Injectable()
++export class JwtStrategy extends PassportStrategy(Strategy) {
++  constructor() {
++    super({
++      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
++      secretOrKey: process.env.JWT_SECRET ?? "dev-secret-change-me",
++      ignoreExpiration: false,
++    });
++  }
++
++  async validate(payload: JwtPayload) {
++    return { id: payload.sub, username: payload.username, role: payload.role };
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/auth/roles.guard.ts b/data-compare-v2/apps/api/src/auth/roles.guard.ts
+new file mode 100755
+index 0000000..529fdee
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/auth/roles.guard.ts
+@@ -0,0 +1,24 @@
++import { CanActivate, ExecutionContext, Injectable, SetMetadata, ForbiddenException } from "@nestjs/common";
++import { Reflector } from "@nestjs/core";
++
++export const ROLES_KEY = "roles";
++export const Roles = (...roles: Array<"superadmin" | "admin" | "user">) => SetMetadata(ROLES_KEY, roles);
++
++@Injectable()
++export class RolesGuard implements CanActivate {
++  constructor(private reflector: Reflector) {}
++
++  canActivate(ctx: ExecutionContext): boolean {
++    const required = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
++      ctx.getHandler(),
++      ctx.getClass(),
++    ]);
++    if (!required || required.length === 0) return true;
++    const req = ctx.switchToHttp().getRequest();
++    const role = req.user?.role;
++    if (!role || !required.includes(role)) {
++      throw new ForbiddenException(`Requires role: ${required.join(", ")}`);
++    }
++    return true;
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/main.ts b/data-compare-v2/apps/api/src/main.ts
+new file mode 100755
+index 0000000..d0ff94e
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/main.ts
+@@ -0,0 +1,34 @@
++import { NestFactory } from "@nestjs/core";
++import { ValidationPipe, Logger } from "@nestjs/common";
++import helmet from "helmet";
++import { AppModule } from "./app.module";
++
++async function bootstrap() {
++  const app = await NestFactory.create(AppModule, { bufferLogs: true });
++  const logger = new Logger("Bootstrap");
++
++  app.use(helmet());
++  app.setGlobalPrefix("api");
++  app.useGlobalPipes(
++    new ValidationPipe({
++      whitelist: true,
++      forbidNonWhitelisted: true,
++      transform: true,
++    }),
++  );
++
++  const corsOrigins = (process.env.CORS_ORIGIN ?? "")
++    .split(",")
++    .map((s) => s.trim())
++    .filter(Boolean);
++  app.enableCors({
++    origin: corsOrigins.length ? corsOrigins : true,
++    credentials: true,
++  });
++
++  const port = Number(process.env.API_PORT ?? 3001);
++  await app.listen(port, "0.0.0.0");
++  logger.log(`Data Compare API listening on :${port}`);
++}
++
++bootstrap();
+diff --git a/data-compare-v2/apps/api/src/prisma/prisma.module.ts b/data-compare-v2/apps/api/src/prisma/prisma.module.ts
+new file mode 100755
+index 0000000..1edbf95
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/prisma/prisma.module.ts
+@@ -0,0 +1,9 @@
++import { Global, Module } from "@nestjs/common";
++import { PrismaService } from "./prisma.service";
++
++@Global()
++@Module({
++  providers: [PrismaService],
++  exports: [PrismaService],
++})
++export class PrismaModule {}
+diff --git a/data-compare-v2/apps/api/src/prisma/prisma.service.ts b/data-compare-v2/apps/api/src/prisma/prisma.service.ts
+new file mode 100755
+index 0000000..2c195b8
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/prisma/prisma.service.ts
+@@ -0,0 +1,12 @@
++import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
++import { PrismaClient } from "@prisma/client";
++
++@Injectable()
++export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
++  async onModuleInit() {
++    await this.$connect();
++  }
++  async onModuleDestroy() {
++    await this.$disconnect();
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/reconciliation/reconciliation.controller.ts b/data-compare-v2/apps/api/src/reconciliation/reconciliation.controller.ts
+new file mode 100755
+index 0000000..7a8a81f
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/reconciliation/reconciliation.controller.ts
+@@ -0,0 +1,40 @@
++import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
++import { IsIn, IsObject, IsString } from "class-validator";
++import { JwtAuthGuard } from "../auth/jwt-auth.guard";
++import { CurrentUser } from "../auth/current-user.decorator";
++import { ReconciliationService } from "./reconciliation.service";
++import { ReconciliationConfig } from "@data-compare/shared";
++
++class CreateJobDto {
++  @IsString() name!: string;
++  @IsIn(["row_compare", "group_sum"]) mode!: "row_compare" | "group_sum";
++  @IsString() beforeFileId!: string;
++  @IsString() afterFileId!: string;
++  @IsObject() config!: ReconciliationConfig;
++}
++
++@UseGuards(JwtAuthGuard)
++@Controller("reconciliation")
++export class ReconciliationController {
++  constructor(private readonly recon: ReconciliationService) {}
++
++  @Get()
++  list(@CurrentUser() user: { id: string }) {
++    return this.recon.list(user.id);
++  }
++
++  @Get(":id")
++  get(@Param("id") id: string) {
++    return this.recon.get(id);
++  }
++
++  @Post()
++  create(@CurrentUser() user: { id: string }, @Body() dto: CreateJobDto) {
++    return this.recon.create(user.id, dto);
++  }
++
++  @Post(":id/run")
++  run(@Param("id") id: string) {
++    return this.recon.run(id);
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/reconciliation/reconciliation.module.ts b/data-compare-v2/apps/api/src/reconciliation/reconciliation.module.ts
+new file mode 100755
+index 0000000..d33fd43
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/reconciliation/reconciliation.module.ts
+@@ -0,0 +1,9 @@
++import { Module } from "@nestjs/common";
++import { ReconciliationService } from "./reconciliation.service";
++import { ReconciliationController } from "./reconciliation.controller";
++
++@Module({
++  providers: [ReconciliationService],
++  controllers: [ReconciliationController],
++})
++export class ReconciliationModule {}
+diff --git a/data-compare-v2/apps/api/src/reconciliation/reconciliation.service.ts b/data-compare-v2/apps/api/src/reconciliation/reconciliation.service.ts
+new file mode 100755
+index 0000000..b4c8b4f
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/reconciliation/reconciliation.service.ts
+@@ -0,0 +1,178 @@
++import { Injectable } from "@nestjs/common";
++import { PrismaService } from "../prisma/prisma.service";
++import { cvApp, cvApi, valuesEqual } from "@data-compare/shared";
++import * as XLSX from "xlsx";
++import * as fs from "node:fs/promises";
++import { ReconciliationConfig } from "@data-compare/shared";
++
++interface DiffRow {
++  key: string;
++  before: Record<string, unknown> | null;
++  after: Record<string, unknown> | null;
++  diffs: Array<{ column: string; before: unknown; after: unknown }>;
++  status: "matched" | "before-only" | "after-only" | "diff";
++}
++
++@Injectable()
++export class ReconciliationService {
++  constructor(private readonly prisma: PrismaService) {}
++
++  list(ownerId: string) {
++    return this.prisma.reconciliationJob.findMany({
++      where: { ownerId },
++      orderBy: { createdAt: "desc" },
++      include: { beforeFile: true, afterFile: true },
++    });
++  }
++
++  get(id: string) {
++    return this.prisma.reconciliationJob.findUniqueOrThrow({
++      where: { id },
++      include: { beforeFile: true, afterFile: true },
++    });
++  }
++
++  async create(ownerId: string, input: {
++    name: string;
++    mode: "row_compare" | "group_sum";
++    beforeFileId: string;
++    afterFileId: string;
++    config: ReconciliationConfig;
++  }) {
++    return this.prisma.reconciliationJob.create({
++      data: {
++        ...input,
++        ownerId,
++        config: input.config as object,
++      },
++    });
++  }
++
++  async run(jobId: string) {
++    const job = await this.get(jobId);
++    await this.prisma.reconciliationJob.update({
++      where: { id: jobId },
++      data: { status: "running" },
++    });
++
++    try {
++      const before = await this.readSheet(job.beforeFile.storedPath);
++      const after = await this.readSheet(job.afterFile.storedPath);
++      const cfg = job.config as unknown as ReconciliationConfig;
++
++      const diff =
++        job.mode === "group_sum"
++          ? this.groupAndSum(before, after, cfg)
++          : this.rowCompare(before, after, cfg);
++
++      return this.prisma.reconciliationJob.update({
++        where: { id: jobId },
++        data: {
++          status: "completed",
++          finishedAt: new Date(),
++          results: diff as unknown as object,
++        },
++      });
++    } catch (err) {
++      return this.prisma.reconciliationJob.update({
++        where: { id: jobId },
++        data: { status: "failed", errorMessage: err instanceof Error ? err.message : String(err) },
++      });
++    }
++  }
++
++  private async readSheet(path: string): Promise<Record<string, unknown>[]> {
++    const buf = await fs.readFile(path);
++    const wb = XLSX.read(buf, { type: "buffer" });
++    const sheet = wb.Sheets[wb.SheetNames[0]!]!;
++    return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
++  }
++
++  /**
++   * Row-by-row comparison ("CMP engine"). Matches rows by composite key or by
++   * sorted position, then for each matched pair walks the column mapping
++   * normalizing both sides via cvApp/cvApi before equality.
++   */
++  private rowCompare(
++    before: Record<string, unknown>[],
++    after: Record<string, unknown>[],
++    cfg: ReconciliationConfig,
++  ): { rows: DiffRow[]; summary: { matched: number; beforeOnly: number; afterOnly: number; diff: number } } {
++    const keyFn =
++      cfg.matchMethod === "key" && cfg.keyColumns?.length
++        ? (r: Record<string, unknown>) => cfg.keyColumns!.map((c) => String(cvApp(r[c]))).join("||")
++        : null;
++
++    const beforeMap = new Map<string, Record<string, unknown>>();
++    const afterMap = new Map<string, Record<string, unknown>>();
++
++    if (keyFn) {
++      before.forEach((r) => beforeMap.set(keyFn(r), r));
++      after.forEach((r) => afterMap.set(keyFn(r), r));
++    } else {
++      const sortKey = cfg.sortColumn;
++      const sorter = (a: Record<string, unknown>, b: Record<string, unknown>) => {
++        if (!sortKey) return 0;
++        return String(a[sortKey] ?? "").localeCompare(String(b[sortKey] ?? ""));
++      };
++      const beforeSorted = [...before].sort(sorter);
++      const afterSorted = [...after].sort(sorter);
++      const max = Math.max(beforeSorted.length, afterSorted.length);
++      for (let i = 0; i < max; i++) {
++        if (beforeSorted[i]) beforeMap.set(`pos:${i}`, beforeSorted[i]!);
++        if (afterSorted[i]) afterMap.set(`pos:${i}`, afterSorted[i]!);
++      }
++    }
++
++    const allKeys = new Set<string>([...beforeMap.keys(), ...afterMap.keys()]);
++    const rows: DiffRow[] = [];
++    let matched = 0, beforeOnly = 0, afterOnly = 0, diff = 0;
++
++    for (const key of allKeys) {
++      const b = beforeMap.get(key) ?? null;
++      const a = afterMap.get(key) ?? null;
++      if (!b) { rows.push({ key, before: null, after: a, diffs: [], status: "after-only" }); afterOnly++; continue; }
++      if (!a) { rows.push({ key, before: b, after: null, diffs: [], status: "before-only" }); beforeOnly++; continue; }
++
++      const diffs: DiffRow["diffs"] = [];
++      for (const m of cfg.columnMappings) {
++        const bv = b[m.before];
++        const av = a[m.after];
++        if (!valuesEqual(av, bv)) diffs.push({ column: m.before, before: bv, after: av });
++      }
++      if (diffs.length === 0) { rows.push({ key, before: b, after: a, diffs, status: "matched" }); matched++; }
++      else { rows.push({ key, before: b, after: a, diffs, status: "diff" }); diff++; }
++    }
++
++    return { rows, summary: { matched, beforeOnly, afterOnly, diff } };
++  }
++
++  private groupAndSum(
++    before: Record<string, unknown>[],
++    after: Record<string, unknown>[],
++    cfg: ReconciliationConfig,
++  ) {
++    const group = (rows: Record<string, unknown>[]) => {
++      const m = new Map<string, Record<string, number>>();
++      for (const r of rows) {
++        const key = (cfg.groupBy ?? []).map((c) => String(cvApp(r[c]))).join("||");
++        const sums = m.get(key) ?? {};
++        for (const c of cfg.sumColumns ?? []) {
++          const n = Number(cvApi(r[c]));
++          sums[c] = (sums[c] ?? 0) + (Number.isFinite(n) ? n : 0);
++        }
++        m.set(key, sums);
++      }
++      return m;
++    };
++    const b = group(before);
++    const a = group(after);
++    const keys = new Set([...b.keys(), ...a.keys()]);
++    const rows = [...keys].map((k) => ({
++      key: k,
++      before: b.get(k) ?? null,
++      after: a.get(k) ?? null,
++    }));
++    return { rows, summary: { groups: keys.size } };
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/stories/stories.controller.ts b/data-compare-v2/apps/api/src/stories/stories.controller.ts
+new file mode 100755
+index 0000000..d22294a
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/stories/stories.controller.ts
+@@ -0,0 +1,43 @@
++import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
++import { IsObject, IsOptional, IsString } from "class-validator";
++import { JwtAuthGuard } from "../auth/jwt-auth.guard";
++import { CurrentUser } from "../auth/current-user.decorator";
++import { StoriesService } from "./stories.service";
++
++class CreateStoryDto {
++  @IsString() key!: string;
++  @IsString() title!: string;
++  @IsOptional() @IsString() description?: string;
++  @IsString() apiEndpoint!: string;
++  @IsOptional() @IsString() apiMethod?: string;
++  @IsOptional() @IsObject() apiHeaders?: Record<string, string>;
++  @IsOptional() apiBody?: unknown;
++  @IsOptional() @IsString() mappingFileId?: string;
++  @IsOptional() @IsString() expectedFileId?: string;
++}
++
++@UseGuards(JwtAuthGuard)
++@Controller("stories")
++export class StoriesController {
++  constructor(private readonly stories: StoriesService) {}
++
++  @Get()
++  list(@CurrentUser() user: { id: string }) {
++    return this.stories.list(user.id);
++  }
++
++  @Get(":id")
++  get(@Param("id") id: string) {
++    return this.stories.get(id);
++  }
++
++  @Post()
++  create(@CurrentUser() user: { id: string }, @Body() dto: CreateStoryDto) {
++    return this.stories.create(user.id, dto);
++  }
++
++  @Post(":id/run")
++  run(@CurrentUser() user: { id: string }, @Param("id") id: string) {
++    return this.stories.run({ storyId: id, userId: user.id });
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/stories/stories.module.ts b/data-compare-v2/apps/api/src/stories/stories.module.ts
+new file mode 100755
+index 0000000..d993035
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/stories/stories.module.ts
+@@ -0,0 +1,9 @@
++import { Module } from "@nestjs/common";
++import { StoriesService } from "./stories.service";
++import { StoriesController } from "./stories.controller";
++
++@Module({
++  providers: [StoriesService],
++  controllers: [StoriesController],
++})
++export class StoriesModule {}
+diff --git a/data-compare-v2/apps/api/src/stories/stories.service.ts b/data-compare-v2/apps/api/src/stories/stories.service.ts
+new file mode 100755
+index 0000000..eaa27e1
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/stories/stories.service.ts
+@@ -0,0 +1,106 @@
++import { Injectable, NotFoundException } from "@nestjs/common";
++import { PrismaService } from "../prisma/prisma.service";
++import {
++  parseMappingRows,
++  validateAgainstMapping,
++  MappingRow,
++} from "@data-compare/shared";
++import * as XLSX from "xlsx";
++import * as fs from "node:fs/promises";
++
++export interface RunStoryInput {
++  storyId: string;
++  userId: string;
++}
++
++@Injectable()
++export class StoriesService {
++  constructor(private readonly prisma: PrismaService) {}
++
++  list(ownerId: string) {
++    return this.prisma.story.findMany({
++      where: { ownerId },
++      orderBy: { updatedAt: "desc" },
++      include: { runs: { take: 1, orderBy: { startedAt: "desc" } } },
++    });
++  }
++
++  get(id: string) {
++    return this.prisma.story.findUniqueOrThrow({
++      where: { id },
++      include: { mappingFile: true, expectedFile: true },
++    });
++  }
++
++  create(ownerId: string, input: {
++    key: string; title: string; description?: string;
++    apiEndpoint: string; apiMethod?: string;
++    apiHeaders?: Record<string, string>; apiBody?: unknown;
++    mappingFileId?: string; expectedFileId?: string;
++  }) {
++    return this.prisma.story.create({
++      data: {
++        ...input,
++        apiHeaders: input.apiHeaders ?? {},
++        apiBody: input.apiBody ?? undefined,
++        ownerId,
++      },
++    });
++  }
++
++  async run({ storyId, userId }: RunStoryInput) {
++    const story = await this.get(storyId);
++    if (!story.mappingFile) throw new NotFoundException("Story has no mapping file attached");
++
++    const run = await this.prisma.storyRun.create({
++      data: { storyId, triggeredById: userId, status: "running" },
++    });
++
++    try {
++      // 1. Call the configured API
++      const res = await fetch(story.apiEndpoint, {
++        method: story.apiMethod,
++        headers: story.apiHeaders as Record<string, string>,
++        body: story.apiBody ? JSON.stringify(story.apiBody) : undefined,
++      });
++      const apiResponse = await res.json();
++
++      // 2. Parse the mapping spreadsheet
++      const mapping = await this.loadMapping(story.mappingFile.storedPath);
++
++      // 3. Validate
++      const { passed, results } = validateAgainstMapping(apiResponse, mapping);
++      const passedCount = results.filter((r) => r.passed).length;
++      const failedCount = results.length - passedCount;
++
++      return this.prisma.storyRun.update({
++        where: { id: run.id },
++        data: {
++          status: passed ? "passed" : "failed",
++          finishedAt: new Date(),
++          apiResponse,
++          results,
++          passedCount,
++          failedCount,
++          totalCount: results.length,
++        },
++      });
++    } catch (err) {
++      return this.prisma.storyRun.update({
++        where: { id: run.id },
++        data: {
++          status: "error",
++          finishedAt: new Date(),
++        },
++      });
++    }
++  }
++
++  private async loadMapping(path: string): Promise<MappingRow[]> {
++    const buf = await fs.readFile(path);
++    const wb = XLSX.read(buf, { type: "buffer" });
++    const sheet = wb.Sheets[wb.SheetNames[0]!]!;
++    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
++    return parseMappingRows(rows);
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/users/users.controller.ts b/data-compare-v2/apps/api/src/users/users.controller.ts
+new file mode 100755
+index 0000000..2c21299
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/users/users.controller.ts
+@@ -0,0 +1,46 @@
++import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
++import { IsEmail, IsIn, IsOptional, IsString, MinLength } from "class-validator";
++import { JwtAuthGuard } from "../auth/jwt-auth.guard";
++import { Roles, RolesGuard } from "../auth/roles.guard";
++import { UsersService } from "./users.service";
++
++class CreateUserDto {
++  @IsString() username!: string;
++  @IsString() @MinLength(8) password!: string;
++  @IsOptional() @IsEmail() email?: string;
++  @IsIn(["superadmin", "admin", "user"]) role!: "superadmin" | "admin" | "user";
++}
++
++class ResetPasswordDto {
++  @IsString() @MinLength(8) newPassword!: string;
++}
++
++@UseGuards(JwtAuthGuard, RolesGuard)
++@Controller("users")
++export class UsersController {
++  constructor(private readonly users: UsersService) {}
++
++  @Get()
++  @Roles("admin", "superadmin")
++  list() {
++    return this.users.list();
++  }
++
++  @Post()
++  @Roles("superadmin")
++  create(@Body() dto: CreateUserDto) {
++    return this.users.create(dto);
++  }
++
++  @Patch(":id/password")
++  @Roles("admin", "superadmin")
++  resetPassword(@Param("id") id: string, @Body() dto: ResetPasswordDto) {
++    return this.users.resetPassword(id, dto.newPassword);
++  }
++
++  @Patch(":id/active")
++  @Roles("superadmin")
++  setActive(@Param("id") id: string, @Body() body: { isActive: boolean }) {
++    return this.users.setActive(id, body.isActive);
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/users/users.module.ts b/data-compare-v2/apps/api/src/users/users.module.ts
+new file mode 100755
+index 0000000..29bec3f
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/users/users.module.ts
+@@ -0,0 +1,10 @@
++import { Module } from "@nestjs/common";
++import { UsersService } from "./users.service";
++import { UsersController } from "./users.controller";
++
++@Module({
++  providers: [UsersService],
++  controllers: [UsersController],
++  exports: [UsersService],
++})
++export class UsersModule {}
+diff --git a/data-compare-v2/apps/api/src/users/users.service.ts b/data-compare-v2/apps/api/src/users/users.service.ts
+new file mode 100755
+index 0000000..a242990
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/users/users.service.ts
+@@ -0,0 +1,40 @@
++import { Injectable, NotFoundException } from "@nestjs/common";
++import * as bcrypt from "bcrypt";
++import { PrismaService } from "../prisma/prisma.service";
++import { UserRole } from "@prisma/client";
++
++@Injectable()
++export class UsersService {
++  constructor(private readonly prisma: PrismaService) {}
++
++  list() {
++    return this.prisma.user.findMany({
++      select: { id: true, username: true, email: true, role: true, isActive: true, lastLoginAt: true, createdAt: true },
++      orderBy: { createdAt: "asc" },
++    });
++  }
++
++  async create(input: { username: string; password: string; email?: string; role: UserRole }) {
++    const passwordHash = await bcrypt.hash(input.password, Number(process.env.BCRYPT_ROUNDS ?? 12));
++    return this.prisma.user.create({
++      data: { username: input.username, email: input.email, role: input.role, passwordHash },
++      select: { id: true, username: true, email: true, role: true },
++    });
++  }
++
++  async resetPassword(userId: string, newPassword: string) {
++    const u = await this.prisma.user.findUnique({ where: { id: userId } });
++    if (!u) throw new NotFoundException();
++    const passwordHash = await bcrypt.hash(newPassword, Number(process.env.BCRYPT_ROUNDS ?? 12));
++    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
++    return { ok: true };
++  }
++
++  async setActive(userId: string, isActive: boolean) {
++    return this.prisma.user.update({
++      where: { id: userId },
++      data: { isActive },
++      select: { id: true, isActive: true },
++    });
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/xml-diff/xml-diff.controller.ts b/data-compare-v2/apps/api/src/xml-diff/xml-diff.controller.ts
+new file mode 100755
+index 0000000..b0e0c47
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/xml-diff/xml-diff.controller.ts
+@@ -0,0 +1,37 @@
++import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
++import { IsString } from "class-validator";
++import { JwtAuthGuard } from "../auth/jwt-auth.guard";
++import { CurrentUser } from "../auth/current-user.decorator";
++import { XmlDiffService } from "./xml-diff.service";
++
++class CreateXmlDiffDto {
++  @IsString() name!: string;
++  @IsString() beforeFileId!: string;
++  @IsString() afterFileId!: string;
++}
++
++@UseGuards(JwtAuthGuard)
++@Controller("xml-diff")
++export class XmlDiffController {
++  constructor(private readonly svc: XmlDiffService) {}
++
++  @Get()
++  list(@CurrentUser() user: { id: string }) {
++    return this.svc.list(user.id);
++  }
++
++  @Get(":id")
++  get(@Param("id") id: string) {
++    return this.svc.get(id);
++  }
++
++  @Post()
++  create(@CurrentUser() user: { id: string }, @Body() dto: CreateXmlDiffDto) {
++    return this.svc.create(user.id, dto);
++  }
++
++  @Post(":id/run")
++  run(@Param("id") id: string) {
++    return this.svc.run(id);
++  }
++}
+diff --git a/data-compare-v2/apps/api/src/xml-diff/xml-diff.module.ts b/data-compare-v2/apps/api/src/xml-diff/xml-diff.module.ts
+new file mode 100755
+index 0000000..c3adf7c
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/xml-diff/xml-diff.module.ts
+@@ -0,0 +1,9 @@
++import { Module } from "@nestjs/common";
++import { XmlDiffService } from "./xml-diff.service";
++import { XmlDiffController } from "./xml-diff.controller";
++
++@Module({
++  providers: [XmlDiffService],
++  controllers: [XmlDiffController],
++})
++export class XmlDiffModule {}
+diff --git a/data-compare-v2/apps/api/src/xml-diff/xml-diff.service.ts b/data-compare-v2/apps/api/src/xml-diff/xml-diff.service.ts
+new file mode 100755
+index 0000000..33b9e69
+--- /dev/null
++++ b/data-compare-v2/apps/api/src/xml-diff/xml-diff.service.ts
+@@ -0,0 +1,91 @@
++import { Injectable } from "@nestjs/common";
++import { XMLParser } from "fast-xml-parser";
++import * as fs from "node:fs/promises";
++import { PrismaService } from "../prisma/prisma.service";
++
++interface XmlDiffEntry {
++  path: string;
++  before: unknown;
++  after: unknown;
++  kind: "added" | "removed" | "changed";
++}
++
++@Injectable()
++export class XmlDiffService {
++  private parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
++
++  constructor(private readonly prisma: PrismaService) {}
++
++  list(ownerId: string) {
++    return this.prisma.xmlDiffJob.findMany({
++      where: { ownerId },
++      orderBy: { createdAt: "desc" },
++      include: { beforeFile: true, afterFile: true },
++    });
++  }
++
++  get(id: string) {
++    return this.prisma.xmlDiffJob.findUniqueOrThrow({
++      where: { id },
++      include: { beforeFile: true, afterFile: true },
++    });
++  }
++
++  create(ownerId: string, input: { name: string; beforeFileId: string; afterFileId: string }) {
++    return this.prisma.xmlDiffJob.create({ data: { ...input, ownerId } });
++  }
++
++  async run(jobId: string) {
++    const job = await this.get(jobId);
++    await this.prisma.xmlDiffJob.update({ where: { id: jobId }, data: { status: "running" } });
++    try {
++      const beforeXml = await fs.readFile(job.beforeFile.storedPath, "utf-8");
++      const afterXml = await fs.readFile(job.afterFile.storedPath, "utf-8");
++      const before = this.parser.parse(beforeXml);
++      const after = this.parser.parse(afterXml);
++      const diffs = this.diff(before, after);
++      const summary = this.buildSummary(diffs);
++      return this.prisma.xmlDiffJob.update({
++        where: { id: jobId },
++        data: { status: "completed", diffPayload: diffs as object, diffSummary: summary },
++      });
++    } catch (err) {
++      return this.prisma.xmlDiffJob.update({
++        where: { id: jobId },
++        data: { status: "failed", diffSummary: err instanceof Error ? err.message : String(err) },
++      });
++    }
++  }
++
++  /** Recursive object diff producing JSON-pointer-style paths. */
++  diff(a: unknown, b: unknown, path = ""): XmlDiffEntry[] {
++    const out: XmlDiffEntry[] = [];
++    if (a === b) return out;
++    if (typeof a !== typeof b || a === null || b === null) {
++      out.push({ path: path || "/", before: a ?? null, after: b ?? null, kind: "changed" });
++      return out;
++    }
++    if (typeof a !== "object") {
++      out.push({ path, before: a, after: b, kind: "changed" });
++      return out;
++    }
++    const ao = a as Record<string, unknown>;
++    const bo = b as Record<string, unknown>;
++    const keys = new Set([...Object.keys(ao), ...Object.keys(bo)]);
++    for (const k of keys) {
++      const next = path ? `${path}/${k}` : `/${k}`;
++      if (!(k in ao)) { out.push({ path: next, before: undefined, after: bo[k], kind: "added" }); continue; }
++      if (!(k in bo)) { out.push({ path: next, before: ao[k], after: undefined, kind: "removed" }); continue; }
++      out.push(...this.diff(ao[k], bo[k], next));
++    }
++    return out;
++  }
++
++  /** Plain-text rollup of a diff — counts by kind, sample paths. */
++  private buildSummary(diffs: XmlDiffEntry[]): string {
++    const byKind = { added: 0, removed: 0, changed: 0 };
++    for (const d of diffs) byKind[d.kind]++;
++    const samples = diffs.slice(0, 10).map((d) => `${d.kind} ${d.path}`).join("\n");
++    return `Added: ${byKind.added}, Removed: ${byKind.removed}, Changed: ${byKind.changed}\n\nSample:\n${samples}`;
++  }
++}
+diff --git a/data-compare-v2/apps/api/tsconfig.json b/data-compare-v2/apps/api/tsconfig.json
+new file mode 100755
+index 0000000..dba2f56
+--- /dev/null
++++ b/data-compare-v2/apps/api/tsconfig.json
+@@ -0,0 +1,14 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "module": "CommonJS",
++    "moduleResolution": "Node",
++    "outDir": "dist",
++    "rootDir": "src",
++    "experimentalDecorators": true,
++    "emitDecoratorMetadata": true,
++    "target": "ES2022",
++    "sourceMap": true
++  },
++  "include": ["src/**/*", "prisma/seed.ts"]
++}
+diff --git a/data-compare-v2/apps/web/Dockerfile b/data-compare-v2/apps/web/Dockerfile
+new file mode 100755
+index 0000000..8ea87e0
+--- /dev/null
++++ b/data-compare-v2/apps/web/Dockerfile
+@@ -0,0 +1,25 @@
++FROM node:20-alpine AS base
++WORKDIR /app
++RUN corepack enable && corepack prepare pnpm@9.7.0 --activate
++
++FROM base AS deps
++COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
++COPY apps/web/package.json ./apps/web/
++COPY packages/shared/package.json ./packages/shared/
++RUN pnpm install --frozen-lockfile || pnpm install
++
++FROM deps AS build
++COPY tsconfig.base.json ./
++COPY packages ./packages
++COPY apps/web ./apps/web
++ENV NEXT_TELEMETRY_DISABLED=1
++RUN pnpm --filter @data-compare/web build
++
++FROM node:20-alpine AS run
++WORKDIR /app
++ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
++COPY --from=build /app/apps/web/.next/standalone ./
++COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
++COPY --from=build /app/apps/web/public ./apps/web/public
++EXPOSE 3000
++CMD ["node","apps/web/server.js"]
+diff --git a/data-compare-v2/apps/web/next-env.d.ts b/data-compare-v2/apps/web/next-env.d.ts
+new file mode 100755
+index 0000000..6080add
+--- /dev/null
++++ b/data-compare-v2/apps/web/next-env.d.ts
+@@ -0,0 +1,2 @@
++/// <reference types="next" />
++/// <reference types="next/image-types/global" />
+diff --git a/data-compare-v2/apps/web/next.config.js b/data-compare-v2/apps/web/next.config.js
+new file mode 100755
+index 0000000..57c42cf
+--- /dev/null
++++ b/data-compare-v2/apps/web/next.config.js
+@@ -0,0 +1,7 @@
++/** @type {import('next').NextConfig} */
++module.exports = {
++  reactStrictMode: true,
++  output: "standalone",
++  transpilePackages: ["@data-compare/shared"],
++  experimental: { typedRoutes: true },
++};
+diff --git a/data-compare-v2/apps/web/package.json b/data-compare-v2/apps/web/package.json
+new file mode 100755
+index 0000000..7e4ed71
+--- /dev/null
++++ b/data-compare-v2/apps/web/package.json
+@@ -0,0 +1,36 @@
++{
++  "name": "@data-compare/web",
++  "version": "0.1.0",
++  "private": true,
++  "scripts": {
++    "dev": "next dev -p 3000",
++    "build": "next build",
++    "start": "next start -p 3000",
++    "lint": "next lint"
++  },
++  "dependencies": {
++    "@data-compare/shared": "workspace:*",
++    "@tanstack/react-query": "^5.59.0",
++    "clsx": "^2.1.1",
++    "lucide-react": "^0.451.0",
++    "next": "14.2.13",
++    "react": "18.3.1",
++    "react-dom": "18.3.1",
++    "react-hook-form": "^7.53.0",
++    "tailwind-merge": "^2.5.2",
++    "xlsx": "^0.18.5",
++    "zod": "^3.23.8",
++    "zustand": "^4.5.5"
++  },
++  "devDependencies": {
++    "@types/node": "^22.7.4",
++    "@types/react": "^18.3.11",
++    "@types/react-dom": "^18.3.0",
++    "autoprefixer": "^10.4.20",
++    "eslint": "^8.57.0",
++    "eslint-config-next": "14.2.13",
++    "postcss": "^8.4.47",
++    "tailwindcss": "^3.4.13",
++    "typescript": "^5.5.4"
++  }
++}
+diff --git a/data-compare-v2/apps/web/postcss.config.js b/data-compare-v2/apps/web/postcss.config.js
+new file mode 100755
+index 0000000..cce4985
+--- /dev/null
++++ b/data-compare-v2/apps/web/postcss.config.js
+@@ -0,0 +1 @@
++module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };
+diff --git a/data-compare-v2/apps/web/src/app/(app)/admin/page.tsx b/data-compare-v2/apps/web/src/app/(app)/admin/page.tsx
+new file mode 100755
+index 0000000..61b42cc
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/(app)/admin/page.tsx
+@@ -0,0 +1,47 @@
++"use client";
++import { useQuery } from "@tanstack/react-query";
++import { api } from "@/lib/api-client";
++import { useAuth } from "@/components/auth-provider";
++
++interface UserRow { id: string; username: string; role: string; isActive: boolean; lastLoginAt: string | null }
++
++export default function AdminPage() {
++  const { user } = useAuth();
++  const { data } = useQuery({
++    queryKey: ["users"],
++    queryFn: () => api<UserRow[]>("/users"),
++    enabled: user?.role === "admin" || user?.role === "superadmin",
++  });
++
++  if (user?.role !== "admin" && user?.role !== "superadmin") {
++    return <div className="p-6 text-slate-500">Admin access required.</div>;
++  }
++
++  return (
++    <div className="p-6">
++      <h1 className="text-xl font-extrabold mb-4">User management</h1>
++      <table className="w-full text-sm border border-slate-200 rounded-md overflow-hidden">
++        <thead className="bg-slate-100 text-left">
++          <tr>
++            <th className="px-3 py-2">Username</th>
++            <th className="px-3 py-2">Role</th>
++            <th className="px-3 py-2">Active</th>
++            <th className="px-3 py-2">Last login</th>
++          </tr>
++        </thead>
++        <tbody>
++          {(data ?? []).map((u) => (
++            <tr key={u.id} className="border-t border-slate-200">
++              <td className="px-3 py-2 font-medium">{u.username}</td>
++              <td className="px-3 py-2">{u.role}</td>
++              <td className="px-3 py-2">{u.isActive ? "Yes" : "No"}</td>
++              <td className="px-3 py-2 text-slate-500">
++                {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : "—"}
++              </td>
++            </tr>
++          ))}
++        </tbody>
++      </table>
++    </div>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/app/(app)/layout.tsx b/data-compare-v2/apps/web/src/app/(app)/layout.tsx
+new file mode 100755
+index 0000000..66599b0
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/(app)/layout.tsx
+@@ -0,0 +1,5 @@
++import { AppShell } from "@/components/app-shell";
++
++export default function AppLayout({ children }: { children: React.ReactNode }) {
++  return <AppShell>{children}</AppShell>;
++}
+diff --git a/data-compare-v2/apps/web/src/app/(app)/metal-apis/page.tsx b/data-compare-v2/apps/web/src/app/(app)/metal-apis/page.tsx
+new file mode 100755
+index 0000000..06fe93a
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/(app)/metal-apis/page.tsx
+@@ -0,0 +1,60 @@
++"use client";
++import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
++import { api } from "@/lib/api-client";
++import { Story } from "@data-compare/shared";
++import Link from "next/link";
++
++export default function MetalApisPage() {
++  const qc = useQueryClient();
++  const { data, isLoading } = useQuery({
++    queryKey: ["stories"],
++    queryFn: () => api<Story[]>("/stories"),
++  });
++
++  const run = useMutation({
++    mutationFn: (id: string) => api(`/stories/${id}/run`, { method: "POST" }),
++    onSuccess: () => qc.invalidateQueries({ queryKey: ["stories"] }),
++  });
++
++  return (
++    <div className="p-6">
++      <header className="mb-4 flex items-center justify-between">
++        <div>
++          <h1 className="text-xl font-extrabold">Metal APIs</h1>
++          <p className="text-sm text-slate-500">5-step API validation stories.</p>
++        </div>
++        <Link href="/metal-apis/new" className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white">
++          + New story
++        </Link>
++      </header>
++
++      {isLoading && <div className="text-slate-500">Loading…</div>}
++
++      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
++        {(data ?? []).map((s) => (
++          <article key={s.id} className="rounded-lg border border-slate-200 bg-white p-4">
++            <div className="mb-1 inline-block rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
++              {s.key}
++            </div>
++            <h2 className="font-bold">{s.title}</h2>
++            <p className="mt-1 text-xs text-slate-500 line-clamp-2">{s.description}</p>
++            <div className="mt-3 flex gap-2">
++              <button
++                onClick={() => run.mutate(s.id)}
++                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50"
++              >
++                Run
++              </button>
++              <Link
++                href={`/metal-apis/${s.id}`}
++                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50"
++              >
++                Open
++              </Link>
++            </div>
++          </article>
++        ))}
++      </div>
++    </div>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/app/(app)/reconciliation/page.tsx b/data-compare-v2/apps/web/src/app/(app)/reconciliation/page.tsx
+new file mode 100755
+index 0000000..b521baf
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/(app)/reconciliation/page.tsx
+@@ -0,0 +1,44 @@
++"use client";
++import { useQuery } from "@tanstack/react-query";
++import { api } from "@/lib/api-client";
++
++interface ReconJob {
++  id: string;
++  name: string;
++  mode: "row_compare" | "group_sum";
++  status: string;
++  createdAt: string;
++}
++
++export default function ReconciliationPage() {
++  const { data } = useQuery({ queryKey: ["recon"], queryFn: () => api<ReconJob[]>("/reconciliation") });
++  return (
++    <div className="p-6">
++      <h1 className="text-xl font-extrabold mb-4">Reconciliation</h1>
++      <p className="text-sm text-slate-500 mb-4">
++        Excel-to-Excel comparison. Upload a Before file, an After file, configure the match key and column mappings,
++        then run.
++      </p>
++      <table className="w-full text-sm border border-slate-200 rounded-md overflow-hidden">
++        <thead className="bg-slate-100 text-left">
++          <tr>
++            <th className="px-3 py-2">Name</th>
++            <th className="px-3 py-2">Mode</th>
++            <th className="px-3 py-2">Status</th>
++            <th className="px-3 py-2">Created</th>
++          </tr>
++        </thead>
++        <tbody>
++          {(data ?? []).map((j) => (
++            <tr key={j.id} className="border-t border-slate-200">
++              <td className="px-3 py-2 font-medium">{j.name}</td>
++              <td className="px-3 py-2">{j.mode}</td>
++              <td className="px-3 py-2">{j.status}</td>
++              <td className="px-3 py-2 text-slate-500">{new Date(j.createdAt).toLocaleString()}</td>
++            </tr>
++          ))}
++        </tbody>
++      </table>
++    </div>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/app/(app)/xml-diff/page.tsx b/data-compare-v2/apps/web/src/app/(app)/xml-diff/page.tsx
+new file mode 100755
+index 0000000..d7b20b6
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/(app)/xml-diff/page.tsx
+@@ -0,0 +1,23 @@
++"use client";
++import { useQuery } from "@tanstack/react-query";
++import { api } from "@/lib/api-client";
++
++interface XmlDiffJob { id: string; name: string; status: string; createdAt: string }
++
++export default function XmlDiffPage() {
++  const { data } = useQuery({ queryKey: ["xml-diff"], queryFn: () => api<XmlDiffJob[]>("/xml-diff") });
++  return (
++    <div className="p-6">
++      <h1 className="text-xl font-extrabold mb-4">XML Diff</h1>
++      <p className="text-sm text-slate-500 mb-4">Before/After XML comparison.</p>
++      <ul className="divide-y divide-slate-200 rounded-md border border-slate-200">
++        {(data ?? []).map((j) => (
++          <li key={j.id} className="px-3 py-2 text-sm flex justify-between">
++            <span className="font-medium">{j.name}</span>
++            <span className="text-slate-500">{j.status}</span>
++          </li>
++        ))}
++      </ul>
++    </div>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/app/globals.css b/data-compare-v2/apps/web/src/app/globals.css
+new file mode 100755
+index 0000000..a9babfa
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/globals.css
+@@ -0,0 +1,14 @@
++@tailwind base;
++@tailwind components;
++@tailwind utilities;
++
++@layer base {
++  :root {
++    --bg: 245 247 250;
++    --surface: 255 255 255;
++    --border: 225 228 232;
++    --accent: 9 105 218;
++    --accent-green: 26 127 55;
++    --accent-red: 207 34 46;
++  }
++}
+diff --git a/data-compare-v2/apps/web/src/app/layout.tsx b/data-compare-v2/apps/web/src/app/layout.tsx
+new file mode 100755
+index 0000000..8612129
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/layout.tsx
+@@ -0,0 +1,18 @@
++import type { Metadata } from "next";
++import "./globals.css";
++import { Providers } from "./providers";
++
++export const metadata: Metadata = {
++  title: "Data Compare",
++  description: "Validate, reconcile, and diff financial data — Metal APIs, Excel, XML.",
++};
++
++export default function RootLayout({ children }: { children: React.ReactNode }) {
++  return (
++    <html lang="en">
++      <body className="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
++        <Providers>{children}</Providers>
++      </body>
++    </html>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/app/login/page.tsx b/data-compare-v2/apps/web/src/app/login/page.tsx
+new file mode 100755
+index 0000000..a057972
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/login/page.tsx
+@@ -0,0 +1,49 @@
++"use client";
++import { useState } from "react";
++import { useAuth } from "@/components/auth-provider";
++
++export default function LoginPage() {
++  const { login } = useAuth();
++  const [username, setUsername] = useState("");
++  const [password, setPassword] = useState("");
++  const [error, setError] = useState<string | null>(null);
++  const [busy, setBusy] = useState(false);
++
++  async function onSubmit(e: React.FormEvent) {
++    e.preventDefault();
++    setBusy(true); setError(null);
++    try { await login(username, password); }
++    catch (err) { setError(err instanceof Error ? err.message : "Login failed"); }
++    finally { setBusy(false); }
++  }
++
++  return (
++    <div className="grid min-h-screen place-items-center px-4">
++      <form onSubmit={onSubmit} className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
++        <h1 className="mb-1 text-lg font-extrabold">Data Compare</h1>
++        <p className="mb-4 text-sm text-slate-500">Sign in to continue.</p>
++        <label className="block text-xs font-semibold text-slate-700">Username</label>
++        <input
++          autoFocus
++          value={username}
++          onChange={(e) => setUsername(e.target.value)}
++          className="mt-1 mb-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
++        />
++        <label className="block text-xs font-semibold text-slate-700">Password</label>
++        <input
++          type="password"
++          value={password}
++          onChange={(e) => setPassword(e.target.value)}
++          className="mt-1 mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
++        />
++        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
++        <button
++          disabled={busy}
++          className="w-full rounded-md bg-blue-600 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
++        >
++          {busy ? "Signing in…" : "Sign in"}
++        </button>
++      </form>
++    </div>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/app/page.tsx b/data-compare-v2/apps/web/src/app/page.tsx
+new file mode 100755
+index 0000000..5f5140d
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/page.tsx
+@@ -0,0 +1,5 @@
++import { redirect } from "next/navigation";
++
++export default function Home() {
++  redirect("/metal-apis");
++}
+diff --git a/data-compare-v2/apps/web/src/app/providers.tsx b/data-compare-v2/apps/web/src/app/providers.tsx
+new file mode 100755
+index 0000000..dc1a68f
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/app/providers.tsx
+@@ -0,0 +1,13 @@
++"use client";
++import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
++import { useState } from "react";
++import { AuthProvider } from "@/components/auth-provider";
++
++export function Providers({ children }: { children: React.ReactNode }) {
++  const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } }));
++  return (
++    <QueryClientProvider client={client}>
++      <AuthProvider>{children}</AuthProvider>
++    </QueryClientProvider>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/components/app-shell.tsx b/data-compare-v2/apps/web/src/components/app-shell.tsx
+new file mode 100755
+index 0000000..8f3be89
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/components/app-shell.tsx
+@@ -0,0 +1,56 @@
++"use client";
++import Link from "next/link";
++import { usePathname } from "next/navigation";
++import { useAuth } from "./auth-provider";
++import { LogOut, Workflow, ArrowLeftRight, FileCode2, Settings } from "lucide-react";
++import { clsx } from "clsx";
++
++const NAV = [
++  { href: "/metal-apis", label: "Metal APIs", icon: Workflow },
++  { href: "/reconciliation", label: "Reconciliation", icon: ArrowLeftRight },
++  { href: "/xml-diff", label: "XML Diff", icon: FileCode2 },
++  { href: "/admin", label: "Admin", icon: Settings, roles: ["admin", "superadmin"] as const },
++] as const;
++
++export function AppShell({ children }: { children: React.ReactNode }) {
++  const { user, logout } = useAuth();
++  const pathname = usePathname();
++  if (!user) return null;
++
++  return (
++    <div className="flex min-h-screen">
++      <aside className="w-60 border-r border-slate-200 bg-white flex flex-col">
++        <div className="px-4 py-4 border-b border-slate-200">
++          <div className="text-sm font-extrabold tracking-tight">Data Compare</div>
++          <div className="text-xs text-slate-500">Validation suite</div>
++        </div>
++        <nav className="flex-1 p-2">
++          {NAV.filter((n) => !("roles" in n) || n.roles!.includes(user.role as typeof n.roles[number])).map((n) => {
++            const Icon = n.icon;
++            const active = pathname.startsWith(n.href);
++            return (
++              <Link
++                key={n.href}
++                href={n.href}
++                className={clsx(
++                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
++                  active ? "bg-blue-50 text-blue-700 font-semibold" : "text-slate-700 hover:bg-slate-100",
++                )}
++              >
++                <Icon size={16} />
++                {n.label}
++              </Link>
++            );
++          })}
++        </nav>
++        <div className="p-3 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between">
++          <span>{user.username} <span className="text-slate-400">({user.role})</span></span>
++          <button onClick={logout} className="text-slate-500 hover:text-slate-900" aria-label="Log out">
++            <LogOut size={16} />
++          </button>
++        </div>
++      </aside>
++      <main className="flex-1 overflow-auto">{children}</main>
++    </div>
++  );
++}
+diff --git a/data-compare-v2/apps/web/src/components/auth-provider.tsx b/data-compare-v2/apps/web/src/components/auth-provider.tsx
+new file mode 100755
+index 0000000..46f9adc
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/components/auth-provider.tsx
+@@ -0,0 +1,54 @@
++"use client";
++import { createContext, useContext, useEffect, useState } from "react";
++import { useRouter, usePathname } from "next/navigation";
++import { api, getToken, setToken } from "@/lib/api-client";
++
++interface SessionUser { id: string; username: string; role: "superadmin" | "admin" | "user"; email: string | null }
++interface AuthCtx {
++  user: SessionUser | null;
++  loading: boolean;
++  login: (u: string, p: string) => Promise<void>;
++  logout: () => void;
++}
++
++const Ctx = createContext<AuthCtx | null>(null);
++
++export function AuthProvider({ children }: { children: React.ReactNode }) {
++  const [user, setUser] = useState<SessionUser | null>(null);
++  const [loading, setLoading] = useState(true);
++  const router = useRouter();
++  const pathname = usePathname();
++
++  useEffect(() => {
++    if (!getToken()) { setLoading(false); return; }
++    api<SessionUser>("/auth/me", { method: "POST" })
++      .then(setUser)
++      .catch(() => setToken(null))
++      .finally(() => setLoading(false));
++  }, []);
++
++  useEffect(() => {
++    if (loading) return;
++    if (!user && pathname !== "/login") router.replace("/login");
++    if (user && pathname === "/login") router.replace("/metal-apis");
++  }, [user, loading, pathname, router]);
++
++  const login = async (username: string, password: string) => {
++    const { accessToken, user } = await api<{ accessToken: string; user: SessionUser }>("/auth/login", {
++      method: "POST",
++      body: JSON.stringify({ username, password }),
++    });
++    setToken(accessToken);
++    setUser(user);
++    router.replace("/metal-apis");
++  };
++  const logout = () => { setToken(null); setUser(null); router.replace("/login"); };
++
++  return <Ctx.Provider value={{ user, loading, login, logout }}>{children}</Ctx.Provider>;
++}
++
++export function useAuth() {
++  const v = useContext(Ctx);
++  if (!v) throw new Error("useAuth must be used inside AuthProvider");
++  return v;
++}
+diff --git a/data-compare-v2/apps/web/src/lib/api-client.ts b/data-compare-v2/apps/web/src/lib/api-client.ts
+new file mode 100755
+index 0000000..6468ad7
+--- /dev/null
++++ b/data-compare-v2/apps/web/src/lib/api-client.ts
+@@ -0,0 +1,31 @@
++/**
++ * Thin fetch wrapper that adds the JWT bearer token from localStorage.
++ * The token is set by AuthProvider on login.
++ */
++const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
++const TOKEN_KEY = "dc.token";
++
++export function getToken(): string | null {
++  if (typeof window === "undefined") return null;
++  return window.localStorage.getItem(TOKEN_KEY);
++}
++export function setToken(t: string | null) {
++  if (typeof window === "undefined") return;
++  if (t) window.localStorage.setItem(TOKEN_KEY, t);
++  else window.localStorage.removeItem(TOKEN_KEY);
++}
++
++export async function api<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
++  const headers = new Headers(init.headers);
++  headers.set("Content-Type", "application/json");
++  const t = getToken();
++  if (t) headers.set("Authorization", `Bearer ${t}`);
++  const res = await fetch(`${BASE}/api${path}`, { ...init, headers });
++  if (!res.ok) {
++    let msg: string;
++    try { msg = (await res.json()).message ?? res.statusText; } catch { msg = res.statusText; }
++    throw new Error(`${res.status} ${msg}`);
++  }
++  if (res.status === 204) return undefined as T;
++  return res.json() as Promise<T>;
++}
+diff --git a/data-compare-v2/apps/web/tailwind.config.ts b/data-compare-v2/apps/web/tailwind.config.ts
+new file mode 100755
+index 0000000..295e44e
+--- /dev/null
++++ b/data-compare-v2/apps/web/tailwind.config.ts
+@@ -0,0 +1,19 @@
++import type { Config } from "tailwindcss";
++
++const config: Config = {
++  content: ["./src/**/*.{ts,tsx}"],
++  theme: {
++    extend: {
++      colors: {
++        accent: { DEFAULT: "#0969da", green: "#1a7f37", red: "#cf222e" },
++      },
++      fontFamily: {
++        sans: ["'Plus Jakarta Sans'", "system-ui", "sans-serif"],
++        mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
++      },
++    },
++  },
++  plugins: [],
++};
++
++export default config;
+diff --git a/data-compare-v2/apps/web/tsconfig.json b/data-compare-v2/apps/web/tsconfig.json
+new file mode 100755
+index 0000000..12ab330
+--- /dev/null
++++ b/data-compare-v2/apps/web/tsconfig.json
+@@ -0,0 +1,21 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "target": "ES2022",
++    "module": "ESNext",
++    "moduleResolution": "Bundler",
++    "lib": ["dom", "dom.iterable", "ES2022"],
++    "jsx": "preserve",
++    "allowJs": false,
++    "noEmit": true,
++    "incremental": true,
++    "plugins": [{ "name": "next" }],
++    "paths": {
++      "@/*": ["./src/*"],
++      "@data-compare/shared": ["../../packages/shared/src/index.ts"],
++      "@data-compare/shared/*": ["../../packages/shared/src/*"]
++    }
++  },
++  "include": ["next-env.d.ts", "src/**/*", ".next/types/**/*.ts"],
++  "exclude": ["node_modules"]
++}
+diff --git a/data-compare-v2/infra/docker/docker-compose.yml b/data-compare-v2/infra/docker/docker-compose.yml
+new file mode 100755
+index 0000000..32b7c49
+--- /dev/null
++++ b/data-compare-v2/infra/docker/docker-compose.yml
+@@ -0,0 +1,68 @@
++services:
++  postgres:
++    image: postgres:16-alpine
++    restart: unless-stopped
++    environment:
++      POSTGRES_USER: ${POSTGRES_USER}
++      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
++      POSTGRES_DB: ${POSTGRES_DB}
++    ports:
++      - "${POSTGRES_PORT:-5432}:5432"
++    volumes:
++      - postgres-data:/var/lib/postgresql/data
++    healthcheck:
++      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
++      interval: 5s
++      timeout: 3s
++      retries: 10
++
++  api:
++    build:
++      context: ../..
++      dockerfile: apps/api/Dockerfile
++    restart: unless-stopped
++    environment:
++      DATABASE_URL: ${DATABASE_URL}
++      JWT_SECRET: ${JWT_SECRET}
++      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
++      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS}
++      CORS_ORIGIN: ${CORS_ORIGIN}
++      UPLOAD_DIR: ${UPLOAD_DIR}
++      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB}
++      API_PORT: 3001
++      NODE_ENV: production
++    depends_on:
++      postgres:
++        condition: service_healthy
++    volumes:
++      - uploads:/var/data-compare/uploads
++    ports:
++      - "3001:3001"
++
++  web:
++    build:
++      context: ../..
++      dockerfile: apps/web/Dockerfile
++    restart: unless-stopped
++    environment:
++      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
++      NODE_ENV: production
++    depends_on:
++      - api
++    ports:
++      - "3000:3000"
++
++  nginx:
++    image: nginx:1.27-alpine
++    restart: unless-stopped
++    depends_on:
++      - web
++      - api
++    ports:
++      - "5000:80"   # keep the legacy port the team knows
++    volumes:
++      - ../nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
++
++volumes:
++  postgres-data:
++  uploads:
+diff --git a/data-compare-v2/infra/nginx/default.conf b/data-compare-v2/infra/nginx/default.conf
+new file mode 100755
+index 0000000..595a4a9
+--- /dev/null
++++ b/data-compare-v2/infra/nginx/default.conf
+@@ -0,0 +1,26 @@
++server {
++  listen 80;
++  server_name _;
++
++  client_max_body_size 50m;
++
++  # API
++  location /api/ {
++    proxy_pass http://api:3001;
++    proxy_http_version 1.1;
++    proxy_set_header Host $host;
++    proxy_set_header X-Real-IP $remote_addr;
++    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
++    proxy_set_header X-Forwarded-Proto $scheme;
++    proxy_read_timeout 300s;
++  }
++
++  # Next.js web app (everything else)
++  location / {
++    proxy_pass http://web:3000;
++    proxy_http_version 1.1;
++    proxy_set_header Host $host;
++    proxy_set_header Upgrade $http_upgrade;
++    proxy_set_header Connection "upgrade";
++  }
++}
+diff --git a/data-compare-v2/infra/scripts/First-Time-Setup.bat b/data-compare-v2/infra/scripts/First-Time-Setup.bat
+new file mode 100755
+index 0000000..a1378c2
+--- /dev/null
++++ b/data-compare-v2/infra/scripts/First-Time-Setup.bat
+@@ -0,0 +1,8 @@
++@echo off
++REM Run database migrations and seed default users.
++REM Run AFTER Start-DataCompare.bat once the API container is up.
++setlocal
++cd /d "%~dp0..\.."
++docker compose -f infra\docker\docker-compose.yml exec api sh -lc "cd /app && npx prisma migrate deploy --schema apps/api/prisma/schema.prisma && node -e \"require('child_process').spawnSync('npx',['ts-node','apps/api/prisma/seed.ts'],{stdio:'inherit'})\""
++echo Done. Default users seeded. ROTATE PASSWORDS via the admin UI immediately.
++endlocal
+diff --git a/data-compare-v2/infra/scripts/Start-DataCompare.bat b/data-compare-v2/infra/scripts/Start-DataCompare.bat
+new file mode 100755
+index 0000000..16c5354
+--- /dev/null
++++ b/data-compare-v2/infra/scripts/Start-DataCompare.bat
+@@ -0,0 +1,24 @@
++@echo off
++REM ============================================================
++REM Data Compare v2 - Windows launcher
++REM Requires Docker Desktop (or Docker Engine) installed.
++REM ============================================================
++setlocal
++cd /d "%~dp0..\.."
++if not exist .env (
++  echo .env not found. Copying from .env.example - EDIT THIS BEFORE PRODUCTION USE.
++  copy .env.example .env >nul
++)
++docker compose -f infra\docker\docker-compose.yml --env-file .env up -d
++if errorlevel 1 (
++  echo Failed to start. Check Docker Desktop is running.
++  exit /b 1
++)
++echo.
++echo Data Compare is starting...
++echo   Web:    http://%COMPUTERNAME%:5000
++echo   API:    http://%COMPUTERNAME%:3001/api
++echo   DB:     localhost:5432
++echo.
++echo First-time setup: run scripts\First-Time-Setup.bat to migrate the DB and seed users.
++endlocal
+diff --git a/data-compare-v2/infra/scripts/Stop-DataCompare.bat b/data-compare-v2/infra/scripts/Stop-DataCompare.bat
+new file mode 100755
+index 0000000..df83b0d
+--- /dev/null
++++ b/data-compare-v2/infra/scripts/Stop-DataCompare.bat
+@@ -0,0 +1,5 @@
++@echo off
++setlocal
++cd /d "%~dp0..\.."
++docker compose -f infra\docker\docker-compose.yml down
++endlocal
+diff --git a/data-compare-v2/package.json b/data-compare-v2/package.json
+new file mode 100755
+index 0000000..83fc107
+--- /dev/null
++++ b/data-compare-v2/package.json
+@@ -0,0 +1,31 @@
++{
++  "name": "data-compare-v2",
++  "private": true,
++  "version": "2.0.0",
++  "description": "Production rewrite of FT Validator: Next.js + NestJS + Postgres + Anthropic LLM",
++  "packageManager": "pnpm@9.7.0",
++  "workspaces": [
++    "apps/*",
++    "packages/*"
++  ],
++  "scripts": {
++    "dev": "pnpm -r --parallel run dev",
++    "build": "pnpm -r run build",
++    "lint": "pnpm -r run lint",
++    "test": "pnpm -r run test",
++    "db:migrate": "pnpm --filter @data-compare/api prisma migrate dev",
++    "db:generate": "pnpm --filter @data-compare/api prisma generate",
++    "docker:up": "docker compose -f infra/docker/docker-compose.yml --env-file .env up -d",
++    "docker:down": "docker compose -f infra/docker/docker-compose.yml down",
++    "docker:logs": "docker compose -f infra/docker/docker-compose.yml logs -f"
++  },
++  "devDependencies": {
++    "typescript": "5.5.4",
++    "prettier": "3.3.3",
++    "eslint": "8.57.0"
++  },
++  "engines": {
++    "node": ">=20.11.0",
++    "pnpm": ">=9.0.0"
++  }
++}
+diff --git a/data-compare-v2/packages/shared/package.json b/data-compare-v2/packages/shared/package.json
+new file mode 100755
+index 0000000..b8d139a
+--- /dev/null
++++ b/data-compare-v2/packages/shared/package.json
+@@ -0,0 +1,22 @@
++{
++  "name": "@data-compare/shared",
++  "version": "0.1.0",
++  "private": true,
++  "main": "./dist/index.js",
++  "types": "./dist/index.d.ts",
++  "exports": {
++    ".": {
++      "types": "./src/index.ts",
++      "default": "./src/index.ts"
++    }
++  },
++  "scripts": {
++    "build": "tsc -p tsconfig.json",
++    "lint": "eslint src --ext .ts",
++    "test": "vitest run"
++  },
++  "devDependencies": {
++    "typescript": "5.5.4",
++    "vitest": "2.0.5"
++  }
++}
+diff --git a/data-compare-v2/packages/shared/src/index.ts b/data-compare-v2/packages/shared/src/index.ts
+new file mode 100755
+index 0000000..65250be
+--- /dev/null
++++ b/data-compare-v2/packages/shared/src/index.ts
+@@ -0,0 +1,9 @@
++/**
++ * @data-compare/shared
++ * Shared types and core algorithms used by both the web (Next.js) and api (NestJS) apps.
++ * Ported from FT_Validator_Standalone.html — the source of truth for data normalization.
++ */
++export * from "./types";
++export * from "./normalize";
++export * from "./paths";
++export * from "./mapping";
+diff --git a/data-compare-v2/packages/shared/src/mapping.ts b/data-compare-v2/packages/shared/src/mapping.ts
+new file mode 100755
+index 0000000..a37e325
+--- /dev/null
++++ b/data-compare-v2/packages/shared/src/mapping.ts
+@@ -0,0 +1,74 @@
++/**
++ * Mapping parser — turns a parsed Excel mapping sheet (already converted to
++ * an array-of-rows by SheetJS) into the canonical MappingRow[] used by the
++ * validator. Skips DYNAMIC_COLUMN, Dummy_field, and DateTime cells per the
++ * legacy parser's rules.
++ */
++import { MappingRow, SKIPPED_MAPPING_TOKENS } from "./types";
++import { resolveFullPath } from "./paths";
++import { valuesEqual } from "./normalize";
++
++export interface ParseMappingOptions {
++  fieldColumn?: string;
++  pathColumn?: string;
++  expectedColumn?: string;
++  typeColumn?: string;
++}
++
++const DEFAULT_COLS: Required<ParseMappingOptions> = {
++  fieldColumn: "Field",
++  pathColumn: "JSON Path",
++  expectedColumn: "Expected",
++  typeColumn: "Type",
++};
++
++export function parseMappingRows(
++  rows: Array<Record<string, unknown>>,
++  opts: ParseMappingOptions = {},
++): MappingRow[] {
++  const o = { ...DEFAULT_COLS, ...opts };
++  const out: MappingRow[] = [];
++
++  for (const row of rows) {
++    const field = String(row[o.fieldColumn] ?? "").trim();
++    const path = String(row[o.pathColumn] ?? "").trim();
++    if (!field || !path) continue;
++    if (SKIPPED_MAPPING_TOKENS.includes(field as (typeof SKIPPED_MAPPING_TOKENS)[number])) continue;
++    if (SKIPPED_MAPPING_TOKENS.includes(path as (typeof SKIPPED_MAPPING_TOKENS)[number])) continue;
++
++    const type = String(row[o.typeColumn] ?? "").trim().toLowerCase();
++    if (type === "datetime") continue; // legacy parser skipped DateTime cells
++
++    out.push({
++      field,
++      jsonPath: path,
++      expected: row[o.expectedColumn],
++      type: (type || undefined) as MappingRow["type"],
++    });
++  }
++
++  return out;
++}
++
++/**
++ * Validate an API response against a parsed mapping.
++ * This is the canonical validation path — all three legacy paths
++ * (cvApiFromMapping etc.) routed through here.
++ */
++export function validateAgainstMapping(
++  apiResponse: unknown,
++  mapping: MappingRow[],
++): { passed: boolean; results: Array<{ field: string; jsonPath: string; expected: unknown; actual: unknown; passed: boolean }> } {
++  const results = mapping.map((m) => {
++    const actual = resolveFullPath(apiResponse, m.jsonPath);
++    const passed = valuesEqual(actual, m.expected);
++    return {
++      field: m.field,
++      jsonPath: m.jsonPath,
++      expected: m.expected,
++      actual,
++      passed,
++    };
++  });
++  return { passed: results.every((r) => r.passed), results };
++}
+diff --git a/data-compare-v2/packages/shared/src/normalize.ts b/data-compare-v2/packages/shared/src/normalize.ts
+new file mode 100755
+index 0000000..9789988
+--- /dev/null
++++ b/data-compare-v2/packages/shared/src/normalize.ts
+@@ -0,0 +1,135 @@
++/**
++ * Value normalization for cross-source equality.
++ * Ported from cvApi() (API-side) and cvApp() (Excel-side) in the legacy app.
++ *
++ * The fundamental problem: the same logical value comes from APIs as
++ * "20240115" or ISO "2024-01-15T00:00:00Z", from Excel as serial 45306
++ * or "15/01/2024" or "1/15/2024". This module collapses them all to a
++ * canonical form for comparison.
++ */
++
++const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)?$/;
++const YYYYMMDD_INT_RE = /^\d{8}$/;
++const DDMMYYYY_RE = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/;
++const MDYYYY_RE = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
++
++export interface NormalizeOptions {
++  /** Excel serial date epoch (Excel uses 1899-12-30 because of the 1900 leap-year bug). */
++  excelEpochUtcMs?: number;
++  /** Number of decimal places to round numeric comparisons to. Default 6. */
++  numberPrecision?: number;
++}
++
++const DEFAULT_OPTS: Required<NormalizeOptions> = {
++  excelEpochUtcMs: Date.UTC(1899, 11, 30),
++  numberPrecision: 6,
++};
++
++/**
++ * Normalize an API-side value (cvApi).
++ * Handles YYYYMMDD integers, ISO date strings, booleans, numeric strings.
++ */
++export function cvApi(value: unknown, opts: NormalizeOptions = {}): string | number | boolean | null {
++  const o = { ...DEFAULT_OPTS, ...opts };
++  if (value == null) return null;
++  if (typeof value === "boolean") return value;
++  if (typeof value === "number") {
++    if (!Number.isFinite(value)) return null;
++    return roundTo(value, o.numberPrecision);
++  }
++  if (typeof value !== "string") return JSON.stringify(value);
++
++  const trimmed = value.trim();
++  if (!trimmed) return "";
++
++  // YYYYMMDD integer-as-string → ISO date
++  if (YYYYMMDD_INT_RE.test(trimmed)) {
++    const y = trimmed.slice(0, 4);
++    const m = trimmed.slice(4, 6);
++    const d = trimmed.slice(6, 8);
++    return `${y}-${m}-${d}`;
++  }
++
++  // ISO datetime → date-only canonical form
++  if (ISO_DATE_RE.test(trimmed)) return trimmed.slice(0, 10);
++
++  // Booleans-as-strings
++  if (/^(true|false)$/i.test(trimmed)) return trimmed.toLowerCase() === "true";
++
++  // Numbers-as-strings
++  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return roundTo(Number(trimmed), o.numberPrecision);
++
++  return trimmed;
++}
++
++/**
++ * Normalize an Excel/app-side value (cvApp).
++ * Handles Excel serial dates, Est.Pmt suffixes, dd/mm/yyyy, M/D/YYYY.
++ */
++export function cvApp(value: unknown, opts: NormalizeOptions = {}): string | number | boolean | null {
++  const o = { ...DEFAULT_OPTS, ...opts };
++  if (value == null) return null;
++  if (typeof value === "boolean") return value;
++
++  if (typeof value === "number") {
++    if (!Number.isFinite(value)) return null;
++    // Excel serial date heuristic: integer between 25569 (1970) and 60000 (~2064)
++    if (Number.isInteger(value) && value >= 1 && value <= 80000) {
++      // Likely a date — but only treat as date if caller will coerce. Return raw.
++      return roundTo(value, o.numberPrecision);
++    }
++    return roundTo(value, o.numberPrecision);
++  }
++
++  if (typeof value !== "string") return JSON.stringify(value);
++  let s = value.trim();
++  if (!s) return "";
++
++  // Strip "Est.Pmt" / "Est. Pmt" prefix or suffix that the legacy app stripped
++  s = s.replace(/^Est\.?\s*Pmt\s*/i, "").replace(/\s*Est\.?\s*Pmt$/i, "").trim();
++
++  // dd/mm/yyyy or dd-mm-yyyy
++  let m = DDMMYYYY_RE.exec(s);
++  if (m) {
++    const [, d, mo, y] = m;
++    if (Number(mo) > 12) {
++      // Could be M/D/YYYY where day > 12 — fall through
++    } else {
++      return `${y}-${mo!.padStart(2, "0")}-${d!.padStart(2, "0")}`;
++    }
++  }
++
++  // M/D/YYYY (American)
++  m = MDYYYY_RE.exec(s);
++  if (m) {
++    const [, mo, d, y] = m;
++    return `${y}-${mo!.padStart(2, "0")}-${d!.padStart(2, "0")}`;
++  }
++
++  if (ISO_DATE_RE.test(s)) return s.slice(0, 10);
++  if (/^(true|false)$/i.test(s)) return s.toLowerCase() === "true";
++  if (/^-?\d+(\.\d+)?$/.test(s)) return roundTo(Number(s), o.numberPrecision);
++
++  return s;
++}
++
++/** Convert an Excel serial date to ISO date string. */
++export function excelSerialToIso(serial: number, opts: NormalizeOptions = {}): string {
++  const o = { ...DEFAULT_OPTS, ...opts };
++  const ms = o.excelEpochUtcMs + serial * 86400 * 1000;
++  return new Date(ms).toISOString().slice(0, 10);
++}
++
++/** Compare two values for "logical equality" using canonical normalization. */
++export function valuesEqual(api: unknown, excel: unknown, opts?: NormalizeOptions): boolean {
++  const a = cvApi(api, opts);
++  const b = cvApp(excel, opts);
++  if (a === null || b === null) return a === b;
++  if (typeof a === "number" && typeof b === "number") return a === b;
++  return String(a) === String(b);
++}
++
++function roundTo(n: number, places: number): number {
++  const f = 10 ** places;
++  return Math.round(n * f) / f;
++}
+diff --git a/data-compare-v2/packages/shared/src/paths.ts b/data-compare-v2/packages/shared/src/paths.ts
+new file mode 100755
+index 0000000..22d5d60
+--- /dev/null
++++ b/data-compare-v2/packages/shared/src/paths.ts
+@@ -0,0 +1,102 @@
++/**
++ * JSON path resolution helpers.
++ * Ported from cvApiFromMapping / resolveFullPath / expandNestedPaths / scanNullObjects
++ * in FT_Validator_Standalone.html.
++ */
++
++/**
++ * Resolve a dotted/bracketed JSON path against an object.
++ * Supports: "a.b.c", "a.b[0].c", "a[0][1]", "$.root.x".
++ * Returns undefined if any segment is missing.
++ */
++export function resolveFullPath(obj: unknown, path: string): unknown {
++  if (obj == null || !path) return undefined;
++  // Strip leading "$." / "$"
++  const cleaned = path.replace(/^\$\.?/, "");
++  if (!cleaned) return obj;
++
++  const segments: Array<string | number> = [];
++  const re = /[^.[\]]+|\[(\d+)\]/g;
++  let m: RegExpExecArray | null;
++  while ((m = re.exec(cleaned)) !== null) {
++    if (m[1] !== undefined) segments.push(Number(m[1]));
++    else segments.push(m[0]);
++  }
++
++  let cur: unknown = obj;
++  for (const seg of segments) {
++    if (cur == null) return undefined;
++    if (typeof seg === "number") {
++      if (!Array.isArray(cur)) return undefined;
++      cur = cur[seg];
++    } else {
++      if (typeof cur !== "object") return undefined;
++      cur = (cur as Record<string, unknown>)[seg];
++    }
++  }
++  return cur;
++}
++
++/**
++ * Walk an object/array and produce every fully-resolved leaf path.
++ * Used to populate the API field dropdown in the legacy UI.
++ */
++export function expandNestedPaths(
++  obj: unknown,
++  prefix = "",
++  out: string[] = [],
++  maxDepth = 12,
++): string[] {
++  if (maxDepth <= 0) return out;
++  if (obj == null || typeof obj !== "object") {
++    if (prefix) out.push(prefix);
++    return out;
++  }
++  if (Array.isArray(obj)) {
++    if (obj.length === 0) {
++      if (prefix) out.push(prefix);
++      return out;
++    }
++    obj.forEach((v, i) => expandNestedPaths(v, `${prefix}[${i}]`, out, maxDepth - 1));
++    return out;
++  }
++  const entries = Object.entries(obj as Record<string, unknown>);
++  if (entries.length === 0) {
++    if (prefix) out.push(prefix);
++    return out;
++  }
++  for (const [k, v] of entries) {
++    const next = prefix ? `${prefix}.${k}` : k;
++    expandNestedPaths(v, next, out, maxDepth - 1);
++  }
++  return out;
++}
++
++/**
++ * Scan an object tree for fields that resolved to null/undefined or to an empty object.
++ * Useful for surfacing "unmapped" or "missing" fields in the validation UI.
++ */
++export function scanNullObjects(obj: unknown, prefix = ""): string[] {
++  const nulls: string[] = [];
++  const walk = (v: unknown, path: string) => {
++    if (v == null) {
++      nulls.push(path);
++      return;
++    }
++    if (Array.isArray(v)) {
++      if (v.length === 0) nulls.push(path);
++      else v.forEach((x, i) => walk(x, `${path}[${i}]`));
++      return;
++    }
++    if (typeof v === "object") {
++      const entries = Object.entries(v as Record<string, unknown>);
++      if (entries.length === 0) {
++        nulls.push(path);
++        return;
++      }
++      for (const [k, val] of entries) walk(val, path ? `${path}.${k}` : k);
++    }
++  };
++  walk(obj, prefix);
++  return nulls;
++}
+diff --git a/data-compare-v2/packages/shared/src/types.ts b/data-compare-v2/packages/shared/src/types.ts
+new file mode 100755
+index 0000000..5205c6f
+--- /dev/null
++++ b/data-compare-v2/packages/shared/src/types.ts
+@@ -0,0 +1,104 @@
++/**
++ * Domain types shared across frontend and backend.
++ */
++
++export type UserRole = "superadmin" | "admin" | "user";
++
++export interface User {
++  id: string;
++  username: string;
++  email: string | null;
++  role: UserRole;
++  createdAt: string;
++  updatedAt: string;
++}
++
++/**
++ * A "Story" is a configured Metal API validation scenario.
++ * In the legacy app these were stored in localStorage as a keyed object;
++ * here they become first-class DB rows.
++ */
++export interface Story {
++  id: string;
++  key: string; // short kebab-case identifier shown as a chip
++  title: string;
++  description: string | null;
++  apiEndpoint: string;
++  apiMethod: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
++  apiHeaders: Record<string, string>;
++  apiBody: unknown;
++  mappingFileId: string | null;
++  expectedFileId: string | null;
++  ownerId: string;
++  createdAt: string;
++  updatedAt: string;
++}
++
++export interface StoryRun {
++  id: string;
++  storyId: string;
++  status: "pending" | "running" | "passed" | "failed" | "error";
++  startedAt: string;
++  finishedAt: string | null;
++  passedCount: number;
++  failedCount: number;
++  totalCount: number;
++  results: ValidationResult[];
++  errorMessage: string | null;
++}
++
++export interface ValidationResult {
++  field: string;
++  jsonPath: string;
++  expected: unknown;
++  actual: unknown;
++  passed: boolean;
++  reason?: string;
++}
++
++export interface MappingRow {
++  field: string;
++  jsonPath: string;
++  expected: unknown;
++  type?: "string" | "number" | "date" | "boolean" | "ignore";
++  notes?: string;
++}
++
++/** Cells/fields the legacy parser intentionally skips. */
++export const SKIPPED_MAPPING_TOKENS = [
++  "DYNAMIC_COLUMN",
++  "Dummy_field",
++] as const;
++
++export interface ReconciliationJob {
++  id: string;
++  name: string;
++  mode: "row-compare" | "group-sum";
++  beforeFileId: string;
++  afterFileId: string;
++  config: ReconciliationConfig;
++  status: "pending" | "running" | "completed" | "failed";
++  ownerId: string;
++  createdAt: string;
++}
++
++export interface ReconciliationConfig {
++  matchMethod: "key" | "positional";
++  keyColumns?: string[];
++  sortColumn?: string;
++  columnMappings: Array<{ before: string; after: string; type?: string }>;
++  conditions?: Array<{ column: string; op: "eq" | "ne" | "gt" | "lt" | "contains"; value: unknown }>;
++  groupBy?: string[];
++  sumColumns?: string[];
++}
++
++export interface XmlDiffJob {
++  id: string;
++  name: string;
++  beforeFileId: string;
++  afterFileId: string;
++  status: "pending" | "running" | "completed" | "failed";
++  diffSummary: string | null;
++  ownerId: string;
++  createdAt: string;
++}
+diff --git a/data-compare-v2/packages/shared/tsconfig.json b/data-compare-v2/packages/shared/tsconfig.json
+new file mode 100755
+index 0000000..3a80839
+--- /dev/null
++++ b/data-compare-v2/packages/shared/tsconfig.json
+@@ -0,0 +1,10 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "outDir": "dist",
++    "rootDir": "src",
++    "module": "CommonJS",
++    "moduleResolution": "Node"
++  },
++  "include": ["src/**/*"]
++}
+diff --git a/data-compare-v2/pnpm-workspace.yaml b/data-compare-v2/pnpm-workspace.yaml
+new file mode 100755
+index 0000000..3ff5faa
+--- /dev/null
++++ b/data-compare-v2/pnpm-workspace.yaml
+@@ -0,0 +1,3 @@
++packages:
++  - "apps/*"
++  - "packages/*"
+diff --git a/data-compare-v2/tsconfig.base.json b/data-compare-v2/tsconfig.base.json
+new file mode 100755
+index 0000000..317c995
+--- /dev/null
++++ b/data-compare-v2/tsconfig.base.json
+@@ -0,0 +1,24 @@
++{
++  "compilerOptions": {
++    "target": "ES2022",
++    "module": "ESNext",
++    "moduleResolution": "Bundler",
++    "lib": ["ES2022", "DOM"],
++    "strict": true,
++    "esModuleInterop": true,
++    "skipLibCheck": true,
++    "forceConsistentCasingInFileNames": true,
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "noUncheckedIndexedAccess": true,
++    "noImplicitOverride": true,
++    "declaration": true,
++    "incremental": true,
++    "baseUrl": ".",
++    "paths": {
++      "@data-compare/shared": ["packages/shared/src/index.ts"],
++      "@data-compare/shared/*": ["packages/shared/src/*"]
++    }
++  },
++  "exclude": ["node_modules", "dist", ".next"]
++}
+-- 
+2.34.1
+
